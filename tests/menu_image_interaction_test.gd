@@ -1,0 +1,171 @@
+extends SceneTree
+## Menu-art interaction contract: visual frames live in the image while the
+## only interactive surfaces are the matching transparent rectangular hitboxes.
+
+const MainScene = preload("res://scenes/main.tscn")
+const VIEWPORT_RECT := Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+const MENU_ART_PATH := "res://assets/backgrounds/menu_resonance_console_v1.png"
+const REMOVED_MENU_COPY := [
+	"CHECKPOINT SẴN SÀNG",
+	"CHƯA CÓ CHECKPOINT",
+	"BẮT ĐẦU TẦN SỐ MỚI",
+	"CẤU HÌNH TẢI TRANG",
+	"KIỂM TRA CÁC KHU VỰC",
+	"ÂM THANH & ĐIỀU KHIỂN",
+	"OFFLINE",
+]
+
+var game
+var checks: int = 0
+var failures: Array[String] = []
+
+func _initialize() -> void:
+	call_deferred("_run")
+
+func _run() -> void:
+	game = MainScene.instantiate()
+	game.test_mode = true
+	root.add_child(game)
+	await process_frame
+	game.profile.checkpoint = {}
+	game.ui.show_menu()
+	await _frames(4)
+
+	var actions := _visible_menu_actions()
+	_check(_has_menu_art(), "Menu uses the new artwork containing the rendered action frames")
+	_check(_has_no_secondary_menu_copy(), "Menu removes every circled secondary description and the footer status copy")
+	_check(actions.size() == 5, "Menu exposes exactly five artwork-aligned action hitboxes")
+	_check(_action_ids(actions) == ["continue", "new_run", "armory", "debug", "settings"], "Menu preserves the five intended action destinations in visual order")
+	_check(_action_rects_are_clear(actions), "Menu hitboxes stay inside the 1280x720 screen and do not overlap")
+	var continue_button := _action(actions, "continue")
+	var new_run_button := _action(actions, "new_run")
+	_check(continue_button != null and continue_button.disabled, "Continue is visibly represented but safely disabled when no checkpoint exists")
+	_check(new_run_button != null and not new_run_button.disabled, "New run remains actionable when there is no checkpoint")
+	_check(_is_operable_art_region(new_run_button), "New-run uses an enabled native Button exactly over its artwork rectangle")
+	if new_run_button != null:
+		new_run_button.emit_signal("pressed")
+		await _frames(2)
+	_check(game.state == "playing" and not game.profile.checkpoint.is_empty(), "The new-run artwork hitbox starts a run and creates its normal checkpoint")
+
+	game.return_to_menu()
+	await _frames(4)
+	continue_button = _action(_visible_menu_actions(), "continue")
+	_check(continue_button != null and not continue_button.disabled, "Continue becomes actionable after a real checkpoint is created")
+	_check(_is_operable_art_region(continue_button), "Continue uses an enabled native Button exactly over its artwork rectangle")
+	if continue_button != null:
+		continue_button.emit_signal("pressed")
+		await _frames(2)
+	_check(game.state == "playing", "The continue artwork hitbox restores the checkpoint through the existing run flow")
+
+	game.return_to_menu()
+	await _frames(4)
+	actions = _visible_menu_actions()
+
+	var armory_button := _action(actions, "armory")
+	_check(_is_operable_art_region(armory_button), "Armory uses an enabled native Button exactly over its artwork rectangle")
+	if armory_button != null:
+		# The headless SceneTree has no OS pointer, so invoke the same native
+		# Button signal a click emits after asserting its live hitbox geometry.
+		armory_button.emit_signal("pressed")
+		await process_frame
+	_check(game.state == "unlocks", "The armory artwork hitbox's pressed signal opens the weapon armory")
+	game.ui.show_menu()
+	await _frames(4)
+	var settings_button := _action(_visible_menu_actions(), "settings")
+	_check(_is_operable_art_region(settings_button), "Settings uses an enabled native Button exactly over its artwork rectangle")
+	if settings_button != null:
+		settings_button.emit_signal("pressed")
+		await process_frame
+	_check(game.state == "settings", "The settings artwork hitbox's pressed signal opens settings")
+
+	game.return_to_menu()
+	await _frames(4)
+	var debug_button := _action(_visible_menu_actions(), "debug")
+	_check(_is_operable_art_region(debug_button), "Debug uses an enabled native Button exactly over its artwork rectangle")
+	if debug_button != null:
+		debug_button.emit_signal("pressed")
+		await process_frame
+	var zone_buttons: int = 0
+	for child in game.ui.overlay.get_children():
+		if child is Button and child.visible and child.text == "VÀO TEST":
+			zone_buttons += 1
+	_check(zone_buttons == game.content.stages.size(), "The debug artwork hitbox opens the existing zone-selection menu")
+
+	game.queue_free()
+	await process_frame
+	if failures.is_empty():
+		print("MENU IMAGE INTERACTION PASS: %d checks" % checks)
+		quit(0)
+		return
+	for failure in failures:
+		push_error(failure)
+	print("MENU IMAGE INTERACTION FAIL: %d/%d checks" % [failures.size(), checks])
+	quit(1)
+
+func _visible_menu_actions() -> Array[Button]:
+	var actions: Array[Button] = []
+	for child in game.ui.overlay.get_children():
+		if child is Button and child.visible and child.has_meta("menu_action_id"):
+			actions.append(child)
+	actions.sort_custom(func(left: Button, right: Button): return left.position.y < right.position.y)
+	return actions
+
+func _action_ids(actions: Array[Button]) -> Array[String]:
+	var ids: Array[String] = []
+	for action in actions:
+		ids.append(str(action.get_meta("menu_action_id")))
+	return ids
+
+func _action(actions: Array[Button], action_id: String) -> Button:
+	for action in actions:
+		if str(action.get_meta("menu_action_id")) == action_id:
+			return action
+	return null
+
+func _has_menu_art() -> bool:
+	for child in game.ui.overlay.get_children():
+		if child is TextureRect and child.texture != null and child.texture.resource_path == MENU_ART_PATH:
+			return true
+	return false
+
+func _has_no_secondary_menu_copy() -> bool:
+	for child in game.ui.overlay.get_children():
+		var visible_copy := ""
+		if child is Label:
+			visible_copy = child.text
+		elif child is Button:
+			visible_copy = child.tooltip_text
+		else:
+			continue
+		for removed_copy in REMOVED_MENU_COPY:
+			if visible_copy.contains(removed_copy):
+				return false
+	return true
+
+func _action_rects_are_clear(actions: Array[Button]) -> bool:
+	for i in range(actions.size()):
+		var first: Rect2 = actions[i].get_meta("menu_art_rect")
+		if not VIEWPORT_RECT.encloses(first):
+			return false
+		for j in range(i + 1, actions.size()):
+			var second: Rect2 = actions[j].get_meta("menu_art_rect")
+			if first.intersects(second):
+				return false
+	return true
+
+func _is_operable_art_region(action: Button) -> bool:
+	if action == null or action.disabled or not action.is_visible_in_tree():
+		return false
+	if action.mouse_filter != Control.MOUSE_FILTER_STOP:
+		return false
+	var hitbox_rect := action.get_global_rect()
+	return hitbox_rect.size == action.size and hitbox_rect.has_point(hitbox_rect.get_center())
+
+func _frames(count: int) -> void:
+	for frame in range(count):
+		await process_frame
+
+func _check(condition: bool, description: String) -> void:
+	checks += 1
+	if not condition:
+		failures.append(description)

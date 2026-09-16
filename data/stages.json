@@ -1,0 +1,543 @@
+[
+  {
+    "name": "ECHO TERMINAL",
+    "subtitle": "GA VỌNG ÂM",
+    "description": "Ga tàu im tiếng. Tìm lại nhịp trống đầu tiên và mở đường ray đến xưởng loa.",
+    "boss": "CONDUCTOR-01",
+    "boss_id": "conductor",
+    "bpm": 90,
+    "enemy_ids": [
+      "drone",
+      "fan",
+      "skirmisher"
+    ],
+    "music_layers": [
+      "drums",
+      "motif"
+    ],
+    "room_templates": [
+      [
+        [
+          320,
+          180,
+          96,
+          128
+        ],
+        [
+          672,
+          400,
+          160,
+          64
+        ]
+      ],
+      [
+        [
+          288,
+          176,
+          96,
+          112
+        ],
+        [
+          576,
+          448,
+          288,
+          64
+        ],
+        [
+          880,
+          176,
+          80,
+          112
+        ]
+      ],
+      [
+        [
+          352,
+          160,
+          64,
+          160
+        ],
+        [
+          352,
+          416,
+          64,
+          128
+        ],
+        [
+          736,
+          272,
+          160,
+          80
+        ]
+      ]
+    ],
+    "boss_obstacles": [
+      [
+        272,
+        192,
+        64,
+        112
+      ],
+      [
+        272,
+        432,
+        64,
+        112
+      ]
+    ],
+    "hazard": "rail",
+    "id": 0,
+    "color": "#35E7FF",
+    "boss_sprite": "res://assets/sprites/boss_1.svg",
+    "beats_per_bar": 4,
+    "loop_beats": 16,
+    "offset_seconds": 0.0
+  },
+  {
+    "name": "BASS FOUNDRY",
+    "subtitle": "XƯỞNG HẠ ÂM",
+    "description": "Piston và màng loa khổng lồ. Thu hồi bè bass khỏi dây chuyền bị chiếm quyền.",
+    "boss": "SUBWOOFER",
+    "boss_id": "subwoofer",
+    "bpm": 100,
+    "enemy_ids": [
+      "charger",
+      "turret",
+      "drone",
+      "fan"
+    ],
+    "music_layers": [
+      "drums",
+      "motif",
+      "bass"
+    ],
+    "room_templates": [
+      [
+        [
+          304,
+          208,
+          208,
+          64
+        ],
+        [
+          592,
+          416,
+          240,
+          64
+        ],
+        [
+          944,
+          176,
+          64,
+          112
+        ]
+      ],
+      [
+        [
+          288,
+          160,
+          128,
+          144
+        ],
+        [
+          576,
+          400,
+          128,
+          144
+        ],
+        [
+          864,
+          160,
+          128,
+          144
+        ]
+      ],
+      [
+        [
+          288,
+          432,
+          160,
+          80
+        ],
+        [
+          448,
+          192,
+          320,
+          64
+        ],
+        [
+          864,
+          368,
+          96,
+          160
+        ]
+      ]
+    ],
+    "boss_obstacles": [
+      [
+        352,
+        160,
+        128,
+        64
+      ],
+      [
+        352,
+        480,
+        128,
+        64
+      ]
+    ],
+    "hazard": "piston",
+    "id": 1,
+    "color": "#FFAB64",
+    "boss_sprite": "res://assets/sprites/boss_2.svg",
+    "beats_per_bar": 4,
+    "loop_beats": 16,
+    "offset_seconds": 0.0
+  },
+  {
+    "name": "LUMINOUS GROVE",
+    "subtitle": "VƯỜN DỮ LIỆU",
+    "description": "Cây quang học lưu giữ hợp âm. Dập các nụ loa nhiễu để khôi phục khu vườn.",
+    "boss": "CHOIR WIDOW",
+    "boss_id": "choir_widow",
+    "bpm": 110,
+    "enemy_ids": [
+      "splitter",
+      "support",
+      "charger",
+      "fan"
+    ],
+    "music_layers": [
+      "drums",
+      "motif",
+      "bass",
+      "pad"
+    ],
+    "room_templates": [
+      [
+        [
+          288,
+          192,
+          96,
+          96
+        ],
+        [
+          512,
+          432,
+          96,
+          96
+        ],
+        [
+          752,
+          224,
+          128,
+          96
+        ]
+      ],
+      [
+        [
+          320,
+          240,
+          80,
+          80
+        ],
+        [
+          544,
+          160,
+          96,
+          96
+        ],
+        [
+          672,
+          416,
+          112,
+          112
+        ],
+        [
+          928,
+          208,
+          64,
+          96
+        ]
+      ],
+      [
+        [
+          272,
+          416,
+          112,
+          112
+        ],
+        [
+          480,
+          192,
+          112,
+          112
+        ],
+        [
+          736,
+          368,
+          112,
+          112
+        ],
+        [
+          960,
+          192,
+          64,
+          96
+        ]
+      ]
+    ],
+    "boss_obstacles": [
+      [
+        288,
+        192,
+        64,
+        64
+      ],
+      [
+        288,
+        464,
+        64,
+        64
+      ]
+    ],
+    "hazard": "echo",
+    "id": 2,
+    "color": "#88FFC9",
+    "boss_sprite": "res://assets/sprites/boss_3.svg",
+    "beats_per_bar": 4,
+    "loop_beats": 16,
+    "offset_seconds": 0.0
+  },
+  {
+    "name": "PRISM SPIRE",
+    "subtitle": "THÁP LĂNG KÍNH",
+    "description": "Tín hiệu phản xạ qua các trụ kính. Đọc đường laser để giành lại giai điệu lead.",
+    "boss": "REFRACTOR",
+    "boss_id": "refractor",
+    "bpm": 120,
+    "enemy_ids": [
+      "sniper",
+      "spiral",
+      "skirmisher",
+      "support"
+    ],
+    "music_layers": [
+      "drums",
+      "motif",
+      "bass",
+      "pad",
+      "lead",
+      "arp"
+    ],
+    "room_templates": [
+      [
+        [
+          352,
+          160,
+          48,
+          144
+        ],
+        [
+          352,
+          416,
+          48,
+          128
+        ],
+        [
+          704,
+          256,
+          48,
+          176
+        ],
+        [
+          944,
+          160,
+          48,
+          112
+        ]
+      ],
+      [
+        [
+          272,
+          208,
+          96,
+          64
+        ],
+        [
+          528,
+          416,
+          96,
+          64
+        ],
+        [
+          752,
+          176,
+          96,
+          64
+        ],
+        [
+          960,
+          400,
+          64,
+          96
+        ]
+      ],
+      [
+        [
+          384,
+          176,
+          64,
+          176
+        ],
+        [
+          640,
+          400,
+          64,
+          144
+        ],
+        [
+          864,
+          176,
+          64,
+          176
+        ]
+      ]
+    ],
+    "boss_obstacles": [
+      [
+        288,
+        176,
+        48,
+        128
+      ],
+      [
+        288,
+        432,
+        48,
+        112
+      ]
+    ],
+    "hazard": "laser",
+    "id": 3,
+    "color": "#9B87FF",
+    "boss_sprite": "res://assets/sprites/boss_4.svg",
+    "beats_per_bar": 4,
+    "loop_beats": 16,
+    "offset_seconds": 0.0
+  },
+  {
+    "name": "SILENT CORE",
+    "subtitle": "LÕI TĨNH LẶNG",
+    "description": "Bản phối đang vỡ vụn trong lõi thành phố. Hợp nhất các lớp nhạc và chấm dứt THE SILENCE.",
+    "boss": "NULL MAESTRO",
+    "boss_id": "null_maestro",
+    "bpm": 128,
+    "enemy_ids": [
+      "warden",
+      "sniper",
+      "spiral",
+      "skirmisher",
+      "charger",
+      "support"
+    ],
+    "music_layers": [
+      "drums",
+      "motif",
+      "bass",
+      "pad",
+      "lead",
+      "arp",
+      "countermelody"
+    ],
+    "room_templates": [
+      [
+        [
+          304,
+          160,
+          160,
+          80
+        ],
+        [
+          496,
+          432,
+          160,
+          80
+        ],
+        [
+          752,
+          240,
+          64,
+          144
+        ],
+        [
+          928,
+          464,
+          80,
+          64
+        ]
+      ],
+      [
+        [
+          320,
+          224,
+          96,
+          96
+        ],
+        [
+          592,
+          160,
+          96,
+          96
+        ],
+        [
+          592,
+          448,
+          96,
+          96
+        ],
+        [
+          896,
+          256,
+          96,
+          96
+        ]
+      ],
+      [
+        [
+          288,
+          176,
+          64,
+          144
+        ],
+        [
+          448,
+          448,
+          176,
+          64
+        ],
+        [
+          704,
+          192,
+          176,
+          64
+        ],
+        [
+          960,
+          368,
+          64,
+          144
+        ]
+      ]
+    ],
+    "boss_obstacles": [],
+    "hazard": "sequence",
+    "id": 4,
+    "color": "#FF6A91",
+    "boss_sprite": "res://assets/sprites/boss_5.svg",
+    "beats_per_bar": 4,
+    "loop_beats": 16,
+    "offset_seconds": 0.0
+  }
+]

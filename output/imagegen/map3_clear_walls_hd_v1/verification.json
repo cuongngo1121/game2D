@@ -1,0 +1,17 @@
+{
+  "Width": 5120,
+  "Height": 3840,
+  "Format": "PNG",
+  "PixelFormat": "Format32bppArgb",
+  "Bytes": 18509096,
+  "Source": "C:\\Users\\Anoth\\Downloads\\Map 3 Mờ.png",
+  "SourceSize": [
+    5120,
+    3840
+  ],
+  "FullCanvasResized": false,
+  "MainEditedSections": 6,
+  "JunctionsVisuallyInspected": 5,
+  "Rendering": "ImageGen section refinement; masked compositing at original atlas dimensions",
+  "RuntimeIntegration": false
+}

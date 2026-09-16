@@ -1,0 +1,102 @@
+[
+  {
+    "id": "drone",
+    "name": "Drone săn âm",
+    "hp": 42,
+    "speed": 94,
+    "damage": 9,
+    "reward": 4,
+    "role": "Áp sát và bắn nốt đơn; buộc người chơi di chuyển.",
+    "sprite": "res://assets/sprites/enemy_drone.svg"
+  },
+  {
+    "id": "fan",
+    "name": "Robot quạt âm",
+    "hp": 56,
+    "speed": 43,
+    "damage": 10,
+    "reward": 5,
+    "role": "Giữ khoảng cách, bắn quạt đạn có khe rộng.",
+    "sprite": "res://assets/sprites/enemy_fan.svg"
+  },
+  {
+    "id": "charger",
+    "name": "Búa trầm",
+    "hp": 79,
+    "speed": 57,
+    "damage": 14,
+    "reward": 6,
+    "role": "Khóa hướng và báo trước rồi lao thẳng; có khoảng hồi.",
+    "sprite": "res://assets/sprites/enemy_charger.svg"
+  },
+  {
+    "id": "turret",
+    "name": "Tháp hạ âm",
+    "hp": 86,
+    "speed": 0,
+    "damage": 12,
+    "reward": 7,
+    "role": "Đứng yên, phóng cung sóng, dùng cover để đổi vị trí.",
+    "sprite": "res://assets/sprites/enemy_turret.svg"
+  },
+  {
+    "id": "splitter",
+    "name": "Hạt vọng",
+    "hp": 65,
+    "speed": 51,
+    "damage": 11,
+    "reward": 7,
+    "role": "Bắn đạn trễ tách nhánh sau khi đi một đoạn.",
+    "sprite": "res://assets/sprites/enemy_splitter.svg"
+  },
+  {
+    "id": "support",
+    "name": "Nụ hòa âm",
+    "hp": 60,
+    "speed": 35,
+    "damage": 8,
+    "reward": 8,
+    "role": "Hỗ trợ các địch ở gần, ưu tiên xử lý sớm.",
+    "sprite": "res://assets/sprites/enemy_support.svg"
+  },
+  {
+    "id": "sniper",
+    "name": "Lăng kính bắn tỉa",
+    "hp": 58,
+    "speed": 39,
+    "damage": 17,
+    "reward": 8,
+    "role": "Báo toàn bộ đường laser, khóa hướng trước khi bắn.",
+    "sprite": "res://assets/sprites/enemy_sniper.svg"
+  },
+  {
+    "id": "spiral",
+    "name": "Drone xoắn ốc",
+    "hp": 82,
+    "speed": 49,
+    "damage": 11,
+    "reward": 8,
+    "role": "Bắn chuỗi đạn xoay chậm; tìm khe rồi di chuyển cùng khe.",
+    "sprite": "res://assets/sprites/enemy_spiral.svg"
+  },
+  {
+    "id": "warden",
+    "name": "Kẻ giữ im lặng",
+    "hp": 100,
+    "speed": 40,
+    "damage": 15,
+    "reward": 10,
+    "role": "Đánh dấu vùng nguy hiểm tại vị trí đã khóa rồi phát xung.",
+    "sprite": "res://assets/sprites/enemy_warden.svg"
+  },
+  {
+    "id": "skirmisher",
+    "name": "Bóng nhiễu",
+    "hp": 69,
+    "speed": 110,
+    "damage": 12,
+    "reward": 9,
+    "role": "Di chuyển ngang và bắn loạt định hướng, thay đổi góc giao tranh.",
+    "sprite": "res://assets/sprites/enemy_skirmisher.svg"
+  }
+]

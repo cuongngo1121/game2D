@@ -1,0 +1,114 @@
+{
+  "character": "Echo Runner — top-down aiming rig",
+  "source": "Original hard-edge pixel art based on the approved top-down concept.",
+  "frame_size": {
+    "width": 32,
+    "height": 32
+  },
+  "canvas": "RGBA PNG, transparent background",
+  "source_facing": "right (+X)",
+  "rotation_contract": {
+    "pivot": {
+      "x": 15,
+      "y": 16
+    },
+    "weapon_grip": {
+      "x": 22,
+      "y": 15
+    },
+    "description": "Rotate player sprite and weapon together by aim_direction.angle() around the player origin."
+  },
+  "recommended_import": {
+    "filter": "Nearest",
+    "mipmaps": false,
+    "scale": "4x or 6x"
+  },
+  "preview": "echo_runner_topdown_preview_8x.png",
+  "palette": {
+    "outline": "#070B1C",
+    "navy": "#111B39",
+    "slate": "#253458",
+    "cyan": "#26D6E7",
+    "cyan_highlight": "#B7FFFF",
+    "purple": "#AA23EC",
+    "pink": "#FF41D7",
+    "amber": "#FFAF2A"
+  },
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "strip": "echo_runner_topdown_idle_4x32.png",
+      "files": [
+        "echo_runner_topdown_idle_0.png",
+        "echo_runner_topdown_idle_1.png",
+        "echo_runner_topdown_idle_2.png",
+        "echo_runner_topdown_idle_3.png"
+      ]
+    },
+    "run": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "strip": "echo_runner_topdown_run_6x32.png",
+      "files": [
+        "echo_runner_topdown_run_0.png",
+        "echo_runner_topdown_run_1.png",
+        "echo_runner_topdown_run_2.png",
+        "echo_runner_topdown_run_3.png",
+        "echo_runner_topdown_run_4.png",
+        "echo_runner_topdown_run_5.png"
+      ]
+    },
+    "attack": {
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "strip": "echo_runner_topdown_attack_4x32.png",
+      "files": [
+        "echo_runner_topdown_attack_0.png",
+        "echo_runner_topdown_attack_1.png",
+        "echo_runner_topdown_attack_2.png",
+        "echo_runner_topdown_attack_3.png"
+      ]
+    },
+    "dash": {
+      "frames": 4,
+      "fps": 16,
+      "loop": false,
+      "strip": "echo_runner_topdown_dash_4x32.png",
+      "files": [
+        "echo_runner_topdown_dash_0.png",
+        "echo_runner_topdown_dash_1.png",
+        "echo_runner_topdown_dash_2.png",
+        "echo_runner_topdown_dash_3.png"
+      ]
+    },
+    "hurt": {
+      "frames": 3,
+      "fps": 10,
+      "loop": false,
+      "strip": "echo_runner_topdown_hurt_3x32.png",
+      "files": [
+        "echo_runner_topdown_hurt_0.png",
+        "echo_runner_topdown_hurt_1.png",
+        "echo_runner_topdown_hurt_2.png"
+      ]
+    },
+    "death": {
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "strip": "echo_runner_topdown_death_6x32.png",
+      "files": [
+        "echo_runner_topdown_death_0.png",
+        "echo_runner_topdown_death_1.png",
+        "echo_runner_topdown_death_2.png",
+        "echo_runner_topdown_death_3.png",
+        "echo_runner_topdown_death_4.png",
+        "echo_runner_topdown_death_5.png"
+      ]
+    }
+  }
+}

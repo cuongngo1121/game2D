@@ -1,0 +1,70 @@
+﻿{
+    "player":  {
+                   "model":  "echo_runner_model_64.png",
+                   "animations":  [
+                                      {
+                                          "frames":  4,
+                                          "loop":  true,
+                                          "name":  "idle",
+                                          "file":  "echo_runner_idle_4x64.png",
+                                          "fps":  8
+                                      },
+                                      {
+                                          "frames":  6,
+                                          "loop":  true,
+                                          "name":  "run",
+                                          "file":  "echo_runner_run_6x64.png",
+                                          "fps":  12
+                                      },
+                                      {
+                                          "frames":  4,
+                                          "loop":  false,
+                                          "name":  "shoot",
+                                          "file":  "echo_runner_shoot_4x64.png",
+                                          "fps":  12
+                                      },
+                                      {
+                                          "frames":  4,
+                                          "loop":  false,
+                                          "name":  "dash",
+                                          "file":  "echo_runner_dash_4x64.png",
+                                          "fps":  16
+                                      },
+                                      {
+                                          "frames":  3,
+                                          "loop":  false,
+                                          "name":  "hurt",
+                                          "file":  "echo_runner_hurt_3x64.png",
+                                          "fps":  12
+                                      },
+                                      {
+                                          "frames":  6,
+                                          "loop":  false,
+                                          "name":  "death",
+                                          "file":  "echo_runner_death_6x64.png",
+                                          "fps":  10
+                                      }
+                                  ]
+               },
+    "sheet_layout":  "horizontal",
+    "enemy":  {
+                  "model":  "neon_drone_model_64.png",
+                  "animations":  [
+                                     {
+                                         "frames":  4,
+                                         "loop":  true,
+                                         "name":  "idle",
+                                         "file":  "neon_drone_idle_4x64.png",
+                                         "fps":  8
+                                     },
+                                     {
+                                         "frames":  3,
+                                         "loop":  false,
+                                         "name":  "hit",
+                                         "file":  "neon_drone_hit_3x64.png",
+                                         "fps":  12
+                                     }
+                                 ]
+              },
+    "canvas":  "64x64"
+}

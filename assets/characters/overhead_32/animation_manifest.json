@@ -1,0 +1,120 @@
+{
+  "character": "Echo Runner — overhead aiming rig",
+  "source": "Original hard-edge pixel art based on the approved literal bird's-eye concept.",
+  "frame_size": {
+    "width": 32,
+    "height": 32
+  },
+  "canvas": "RGBA PNG, transparent background",
+  "source_facing": "right (+X)",
+  "rotation_contract": {
+    "pivot": {
+      "x": 15,
+      "y": 16
+    },
+    "weapon_grip": {
+      "x": 22,
+      "y": 17
+    },
+    "description": "Rotate player sprite and weapon together by aim_direction.angle() around the player origin."
+  },
+  "recommended_import": {
+    "filter": "Nearest",
+    "mipmaps": false,
+    "scale": "4x or 6x"
+  },
+  "preview": "echo_runner_overhead_preview_8x.png",
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "strip": "echo_runner_overhead_idle_4x32.png",
+      "files": [
+        "echo_runner_overhead_idle_0.png",
+        "echo_runner_overhead_idle_1.png",
+        "echo_runner_overhead_idle_2.png",
+        "echo_runner_overhead_idle_3.png"
+      ]
+    },
+    "run": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "strip": "echo_runner_overhead_run_6x32.png",
+      "files": [
+        "echo_runner_overhead_run_0.png",
+        "echo_runner_overhead_run_1.png",
+        "echo_runner_overhead_run_2.png",
+        "echo_runner_overhead_run_3.png",
+        "echo_runner_overhead_run_4.png",
+        "echo_runner_overhead_run_5.png"
+      ]
+    },
+    "attack": {
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "strip": "echo_runner_overhead_attack_6x32.png",
+      "files": [
+        "echo_runner_overhead_attack_0.png",
+        "echo_runner_overhead_attack_1.png",
+        "echo_runner_overhead_attack_2.png",
+        "echo_runner_overhead_attack_3.png",
+        "echo_runner_overhead_attack_4.png",
+        "echo_runner_overhead_attack_5.png"
+      ]
+    },
+    "run_attack": {
+      "frames": 6,
+      "fps": 12,
+      "loop": true,
+      "strip": "echo_runner_overhead_run_attack_6x32.png",
+      "files": [
+        "echo_runner_overhead_run_attack_0.png",
+        "echo_runner_overhead_run_attack_1.png",
+        "echo_runner_overhead_run_attack_2.png",
+        "echo_runner_overhead_run_attack_3.png",
+        "echo_runner_overhead_run_attack_4.png",
+        "echo_runner_overhead_run_attack_5.png"
+      ]
+    },
+    "dash": {
+      "frames": 4,
+      "fps": 16,
+      "loop": false,
+      "strip": "echo_runner_overhead_dash_4x32.png",
+      "files": [
+        "echo_runner_overhead_dash_0.png",
+        "echo_runner_overhead_dash_1.png",
+        "echo_runner_overhead_dash_2.png",
+        "echo_runner_overhead_dash_3.png"
+      ]
+    },
+    "hurt": {
+      "frames": 3,
+      "fps": 10,
+      "loop": false,
+      "strip": "echo_runner_overhead_hurt_3x32.png",
+      "files": [
+        "echo_runner_overhead_hurt_0.png",
+        "echo_runner_overhead_hurt_1.png",
+        "echo_runner_overhead_hurt_2.png"
+      ]
+    },
+    "death": {
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "strip": "echo_runner_overhead_death_6x32.png",
+      "files": [
+        "echo_runner_overhead_death_0.png",
+        "echo_runner_overhead_death_1.png",
+        "echo_runner_overhead_death_2.png",
+        "echo_runner_overhead_death_3.png",
+        "echo_runner_overhead_death_4.png",
+        "echo_runner_overhead_death_5.png"
+      ]
+    }
+  }
+}

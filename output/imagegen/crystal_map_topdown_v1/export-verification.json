@@ -1,0 +1,15 @@
+{
+  "SourceWidth": 1448,
+  "SourceHeight": 1086,
+  "GeneratedWidth": 1448,
+  "GeneratedHeight": 1086,
+  "FinalWidth": 5120,
+  "FinalHeight": 3840,
+  "Format": "PNG",
+  "ColorFormat": "Format24bppRgb",
+  "FileBytes": 16835311,
+  "ExportMethod": "Built-in ImageGen artwork edit followed by high-quality bicubic resampling to the requested dimensions",
+  "VisualRoomCount": 6,
+  "VisualCorridorCount": 5,
+  "VisualSideBranches": 1
+}

@@ -1,0 +1,109 @@
+[
+  {
+    "id": "speed",
+    "name": "Bước sóng nhanh",
+    "description": "Tăng 23 px/giây tốc độ di chuyển mỗi tầng; tốc độ ban đầu 205 px/giây.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "dash",
+    "name": "Tụ dash",
+    "description": "Giảm 0,23 giây hồi dash mỗi tầng, từ 1,65 giây; không thấp hơn 0,65 giây.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "shield",
+    "name": "Khiên hòa âm",
+    "description": "Tăng 20 khiên tối đa và nạp ngay phần khiên tăng thêm.",
+    "max_stacks": 4,
+    "compatible": []
+  },
+  {
+    "id": "shield_delay",
+    "name": "Mạch ổn định",
+    "description": "Giảm 0,7 giây chờ hồi khiên mỗi tầng, từ 4 giây; không thấp hơn 1,2 giây.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "energy",
+    "name": "Pin cộng hưởng",
+    "description": "Tăng 30 năng lượng tối đa mỗi tầng và nạp đầy pin ngay khi chọn.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "regen",
+    "name": "Thu hồi điện tích",
+    "description": "Tăng 3,5 năng lượng hồi mỗi giây cho mỗi tầng; tốc độ hồi ban đầu 5 mỗi giây.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "pierce",
+    "name": "Nốt xuyên",
+    "description": "Đạn xuyên thêm một mục tiêu mỗi tầng. Chỉ áp dụng cho vũ khí bắn đạn phù hợp.",
+    "max_stacks": 2,
+    "compatible": [
+      "pistol",
+      "smg",
+      "shotgun",
+      "rail",
+      "disc",
+      "wave",
+      "chord"
+    ]
+  },
+  {
+    "id": "bounce",
+    "name": "Đạn nảy",
+    "description": "Đạn nảy thêm một lần khi chạm vật cản. Shotgun phủ góc phòng hiệu quả hơn.",
+    "max_stacks": 2,
+    "compatible": [
+      "pistol",
+      "smg",
+      "shotgun",
+      "rail",
+      "chord"
+    ]
+  },
+  {
+    "id": "explosion",
+    "name": "Dư âm vỡ",
+    "description": "Hạ địch có 22% cơ hội mỗi tầng tạo một vụ nổ nhỏ gây sát thương địch ở gần.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "magnet",
+    "name": "Nam châm nốt",
+    "description": "Tăng 50 px bán kính hút vật phẩm mỗi tầng; bán kính ban đầu 65 px.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "perfect_wave",
+    "name": "Dash ngân vang",
+    "description": "Perfect Dash: mỗi tầng +4 cộng hưởng, gây 14 sát thương và đẩy 40 px trong vùng 100 px. Xóa đạn thường trong 70 px.",
+    "max_stacks": 2,
+    "compatible": []
+  },
+  {
+    "id": "pulse",
+    "name": "Hợp âm bùng nổ",
+    "description": "Pulse Burst thêm 30 sát thương và 32 px bán kính mỗi tầng; ban đầu 95 sát thương, 155 px.",
+    "max_stacks": 3,
+    "compatible": []
+  },
+  {
+    "id": "chain",
+    "name": "Dây dẫn",
+    "description": "Arc Conductor lan thêm hai mục tiêu mỗi tầng và tìm mục tiêu xa hơn.",
+    "max_stacks": 3,
+    "compatible": [
+      "arc"
+    ]
+  }
+]

@@ -1,0 +1,898 @@
+{
+  "format": "RGBA PNG",
+  "frame_dimensions": {
+    "width": 32,
+    "height": 32
+  },
+  "filter": "nearest",
+  "enemies": [
+    {
+      "id": "drone",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_drone_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "drone",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "drone",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_drone_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "drone",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_drone_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "drone",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_drone_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "fan",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_fan_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "fan",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "fan",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_fan_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "fan",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_fan_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "fan",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_fan_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "charger",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_charger_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "charger",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "charger",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_charger_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "charger",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_charger_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "charger",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_charger_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "turret",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_turret_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "turret",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "turret",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_turret_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "turret",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_turret_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "turret",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_turret_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "splitter",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_splitter_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "splitter",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "splitter",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_splitter_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "splitter",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_splitter_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "splitter",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_splitter_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "support",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_support_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "support",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "support",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_support_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "support",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_support_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "support",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_support_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "sniper",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_sniper_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "sniper",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "sniper",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_sniper_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "sniper",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_sniper_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "sniper",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_sniper_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "spiral",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_spiral_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "spiral",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "spiral",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_spiral_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "spiral",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_spiral_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "spiral",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_spiral_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "warden",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_warden_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "warden",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "warden",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_warden_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "warden",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_warden_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "warden",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_warden_death_6x32_5.png"
+      ]
+    },
+    {
+      "id": "skirmisher",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_idle_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_idle_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_idle_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_idle_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_idle_4x32_3.png"
+      ]
+    },
+    {
+      "id": "skirmisher",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_move_6x32_5.png"
+      ]
+    },
+    {
+      "id": "skirmisher",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_attack_4x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_attack_4x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_attack_4x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_attack_4x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_attack_4x32_3.png"
+      ]
+    },
+    {
+      "id": "skirmisher",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_hurt_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_hurt_3x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_hurt_3x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_hurt_3x32_2.png"
+      ]
+    },
+    {
+      "id": "skirmisher",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32_0.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32_1.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32_2.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32_3.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32_4.png",
+        "assets/sprites/pixel_32/enemies/animations/enemy_skirmisher_death_6x32_5.png"
+      ]
+    }
+  ],
+  "weapons": [
+    {
+      "id": "pistol",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_pistol_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_pistol_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_pistol_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_pistol_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "smg",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_smg_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_smg_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_smg_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_smg_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "shotgun",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_shotgun_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_shotgun_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_shotgun_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_shotgun_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "rail",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_rail_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_rail_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_rail_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_rail_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "beam",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_beam_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_beam_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_beam_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_beam_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "disc",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_disc_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_disc_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_disc_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_disc_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "arc",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_arc_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_arc_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_arc_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_arc_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "wave",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_wave_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_wave_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_wave_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_wave_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "glitch",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_glitch_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_glitch_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_glitch_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_glitch_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "orbit",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_orbit_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_orbit_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_orbit_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_orbit_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "blade",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_blade_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_blade_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_blade_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_blade_recoil_3x32_2.png"
+      ]
+    },
+    {
+      "id": "chord",
+      "animation": "recoil",
+      "frames": 3,
+      "fps": 18.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_32/weapons/animations/weapon_chord_recoil_3x32.png",
+      "frame_paths": [
+        "assets/sprites/pixel_32/weapons/animations/weapon_chord_recoil_3x32_0.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_chord_recoil_3x32_1.png",
+        "assets/sprites/pixel_32/weapons/animations/weapon_chord_recoil_3x32_2.png"
+      ]
+    }
+  ]
+}

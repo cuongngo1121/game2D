@@ -1,0 +1,410 @@
+{
+  "sample_rate": 22050,
+  "channels": 1,
+  "bits": 16,
+  "tracks": [
+    {
+      "path": "assets/audio/stage_1_explore.wav",
+      "frames": 235200,
+      "rate": 22050,
+      "duration": 10.666666666666666,
+      "peak": 0.23,
+      "loop": true,
+      "bpm": 90,
+      "beats": 16,
+      "variant": "explore",
+      "stage": 0,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_1_combat.wav",
+      "frames": 235200,
+      "rate": 22050,
+      "duration": 10.666666666666666,
+      "peak": 0.4298,
+      "loop": true,
+      "bpm": 90,
+      "beats": 16,
+      "variant": "combat",
+      "stage": 0,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_1_boss.wav",
+      "frames": 235200,
+      "rate": 22050,
+      "duration": 10.666666666666666,
+      "peak": 0.4265,
+      "loop": true,
+      "bpm": 90,
+      "beats": 16,
+      "variant": "boss",
+      "stage": 0,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_2_explore.wav",
+      "frames": 211680,
+      "rate": 22050,
+      "duration": 9.6,
+      "peak": 0.2855,
+      "loop": true,
+      "bpm": 100,
+      "beats": 16,
+      "variant": "explore",
+      "stage": 1,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_2_combat.wav",
+      "frames": 211680,
+      "rate": 22050,
+      "duration": 9.6,
+      "peak": 0.49,
+      "loop": true,
+      "bpm": 100,
+      "beats": 16,
+      "variant": "combat",
+      "stage": 1,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_2_boss.wav",
+      "frames": 211680,
+      "rate": 22050,
+      "duration": 9.6,
+      "peak": 0.4959,
+      "loop": true,
+      "bpm": 100,
+      "beats": 16,
+      "variant": "boss",
+      "stage": 1,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_3_explore.wav",
+      "frames": 192436,
+      "rate": 22050,
+      "duration": 8.727256235827664,
+      "peak": 0.2945,
+      "loop": true,
+      "bpm": 110,
+      "beats": 16,
+      "variant": "explore",
+      "stage": 2,
+      "loop_error_samples": -0.363636
+    },
+    {
+      "path": "assets/audio/stage_3_combat.wav",
+      "frames": 192436,
+      "rate": 22050,
+      "duration": 8.727256235827664,
+      "peak": 0.5044,
+      "loop": true,
+      "bpm": 110,
+      "beats": 16,
+      "variant": "combat",
+      "stage": 2,
+      "loop_error_samples": -0.363636
+    },
+    {
+      "path": "assets/audio/stage_3_boss.wav",
+      "frames": 192436,
+      "rate": 22050,
+      "duration": 8.727256235827664,
+      "peak": 0.499,
+      "loop": true,
+      "bpm": 110,
+      "beats": 16,
+      "variant": "boss",
+      "stage": 2,
+      "loop_error_samples": -0.363636
+    },
+    {
+      "path": "assets/audio/stage_4_explore.wav",
+      "frames": 176400,
+      "rate": 22050,
+      "duration": 8.0,
+      "peak": 0.3122,
+      "loop": true,
+      "bpm": 120,
+      "beats": 16,
+      "variant": "explore",
+      "stage": 3,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_4_combat.wav",
+      "frames": 176400,
+      "rate": 22050,
+      "duration": 8.0,
+      "peak": 0.5439,
+      "loop": true,
+      "bpm": 120,
+      "beats": 16,
+      "variant": "combat",
+      "stage": 3,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_4_boss.wav",
+      "frames": 176400,
+      "rate": 22050,
+      "duration": 8.0,
+      "peak": 0.4907,
+      "loop": true,
+      "bpm": 120,
+      "beats": 16,
+      "variant": "boss",
+      "stage": 3,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_5_explore.wav",
+      "frames": 165375,
+      "rate": 22050,
+      "duration": 7.5,
+      "peak": 0.2702,
+      "loop": true,
+      "bpm": 128,
+      "beats": 16,
+      "variant": "explore",
+      "stage": 4,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_5_combat.wav",
+      "frames": 165375,
+      "rate": 22050,
+      "duration": 7.5,
+      "peak": 0.4959,
+      "loop": true,
+      "bpm": 128,
+      "beats": 16,
+      "variant": "combat",
+      "stage": 4,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/stage_5_boss.wav",
+      "frames": 165375,
+      "rate": 22050,
+      "duration": 7.5,
+      "peak": 0.5034,
+      "loop": true,
+      "bpm": 128,
+      "beats": 16,
+      "variant": "boss",
+      "stage": 4,
+      "loop_error_samples": 0.0
+    },
+    {
+      "path": "assets/audio/sfx_shoot.wav",
+      "frames": 2315,
+      "rate": 22050,
+      "duration": 0.10498866213151928,
+      "peak": 0.1996,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_hit.wav",
+      "frames": 2205,
+      "rate": 22050,
+      "duration": 0.1,
+      "peak": 0.2852,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_dash.wav",
+      "frames": 4630,
+      "rate": 22050,
+      "duration": 0.20997732426303856,
+      "peak": 0.178,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_perfect.wav",
+      "frames": 6836,
+      "rate": 22050,
+      "duration": 0.31002267573696146,
+      "peak": 0.234,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_hurt.wav",
+      "frames": 5512,
+      "rate": 22050,
+      "duration": 0.24997732426303854,
+      "peak": 0.3467,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_pickup.wav",
+      "frames": 4410,
+      "rate": 22050,
+      "duration": 0.2,
+      "peak": 0.2279,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_door.wav",
+      "frames": 6615,
+      "rate": 22050,
+      "duration": 0.3,
+      "peak": 0.186,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_buy.wav",
+      "frames": 7056,
+      "rate": 22050,
+      "duration": 0.32,
+      "peak": 0.2306,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_boss.wav",
+      "frames": 14112,
+      "rate": 22050,
+      "duration": 0.64,
+      "peak": 0.3976,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_pulse.wav",
+      "frames": 12128,
+      "rate": 22050,
+      "duration": 0.5500226757369614,
+      "peak": 0.2754,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_shield_break.wav",
+      "frames": 5733,
+      "rate": 22050,
+      "duration": 0.26,
+      "peak": 0.2439,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_shield_regen.wav",
+      "frames": 6615,
+      "rate": 22050,
+      "duration": 0.3,
+      "peak": 0.1404,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_victory.wav",
+      "frames": 17640,
+      "rate": 22050,
+      "duration": 0.8,
+      "peak": 0.2559,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_ui.wav",
+      "frames": 1654,
+      "rate": 22050,
+      "duration": 0.07501133786848073,
+      "peak": 0.1389,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_pistol.wav",
+      "frames": 2315,
+      "rate": 22050,
+      "duration": 0.10498866213151928,
+      "peak": 0.1922,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_smg.wav",
+      "frames": 1213,
+      "rate": 22050,
+      "duration": 0.055011337868480725,
+      "peak": 0.1205,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_shotgun.wav",
+      "frames": 5292,
+      "rate": 22050,
+      "duration": 0.24,
+      "peak": 0.3041,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_rail.wav",
+      "frames": 6836,
+      "rate": 22050,
+      "duration": 0.31002267573696146,
+      "peak": 0.2259,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_beam.wav",
+      "frames": 2426,
+      "rate": 22050,
+      "duration": 0.11002267573696145,
+      "peak": 0.1278,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_disc.wav",
+      "frames": 6394,
+      "rate": 22050,
+      "duration": 0.28997732426303857,
+      "peak": 0.1786,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_arc.wav",
+      "frames": 4851,
+      "rate": 22050,
+      "duration": 0.22,
+      "peak": 0.2613,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_wave.wav",
+      "frames": 7938,
+      "rate": 22050,
+      "duration": 0.36,
+      "peak": 0.2024,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_glitch.wav",
+      "frames": 6615,
+      "rate": 22050,
+      "duration": 0.3,
+      "peak": 0.2489,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_orbit.wav",
+      "frames": 9261,
+      "rate": 22050,
+      "duration": 0.42,
+      "peak": 0.1808,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_blade.wav",
+      "frames": 3969,
+      "rate": 22050,
+      "duration": 0.18,
+      "peak": 0.1683,
+      "loop": false
+    },
+    {
+      "path": "assets/audio/sfx_weapon_chord.wav",
+      "frames": 6394,
+      "rate": 22050,
+      "duration": 0.28997732426303857,
+      "peak": 0.2295,
+      "loop": false
+    }
+  ]
+}

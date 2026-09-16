@@ -1,0 +1,107 @@
+{
+  "character": "Echo Runner",
+  "source": "Original pixel-art test asset; concept palette and silhouette guided by an AI-generated design study.",
+  "frame_size": {
+    "width": 32,
+    "height": 32
+  },
+  "canvas": "RGBA PNG, transparent background",
+  "anchor": {
+    "x": 15,
+    "y": 28,
+    "description": "feet/ground anchor; keep this point fixed in Godot"
+  },
+  "recommended_import": {
+    "filter": "Nearest",
+    "mipmaps": false,
+    "scale": "4x or 6x for a readable test preview"
+  },
+  "preview": "echo_runner_preview_8x.png",
+  "palette": {
+    "outline": "#070B1C",
+    "navy": "#111B39",
+    "slate": "#253458",
+    "cyan": "#26D6E7",
+    "cyan_highlight": "#B7FFFF",
+    "purple": "#AA23EC",
+    "pink": "#FF41D7",
+    "amber": "#FFAF2A"
+  },
+  "animations": {
+    "idle": {
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "strip": "echo_runner_idle_4x32.png",
+      "files": [
+        "echo_runner_idle_0.png",
+        "echo_runner_idle_1.png",
+        "echo_runner_idle_2.png",
+        "echo_runner_idle_3.png"
+      ]
+    },
+    "run": {
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "strip": "echo_runner_run_6x32.png",
+      "files": [
+        "echo_runner_run_0.png",
+        "echo_runner_run_1.png",
+        "echo_runner_run_2.png",
+        "echo_runner_run_3.png",
+        "echo_runner_run_4.png",
+        "echo_runner_run_5.png"
+      ]
+    },
+    "attack": {
+      "frames": 4,
+      "fps": 12,
+      "loop": false,
+      "strip": "echo_runner_attack_4x32.png",
+      "files": [
+        "echo_runner_attack_0.png",
+        "echo_runner_attack_1.png",
+        "echo_runner_attack_2.png",
+        "echo_runner_attack_3.png"
+      ]
+    },
+    "dash": {
+      "frames": 4,
+      "fps": 16,
+      "loop": false,
+      "strip": "echo_runner_dash_4x32.png",
+      "files": [
+        "echo_runner_dash_0.png",
+        "echo_runner_dash_1.png",
+        "echo_runner_dash_2.png",
+        "echo_runner_dash_3.png"
+      ]
+    },
+    "hurt": {
+      "frames": 3,
+      "fps": 10,
+      "loop": false,
+      "strip": "echo_runner_hurt_3x32.png",
+      "files": [
+        "echo_runner_hurt_0.png",
+        "echo_runner_hurt_1.png",
+        "echo_runner_hurt_2.png"
+      ]
+    },
+    "death": {
+      "frames": 6,
+      "fps": 8,
+      "loop": false,
+      "strip": "echo_runner_death_6x32.png",
+      "files": [
+        "echo_runner_death_0.png",
+        "echo_runner_death_1.png",
+        "echo_runner_death_2.png",
+        "echo_runner_death_3.png",
+        "echo_runner_death_4.png",
+        "echo_runner_death_5.png"
+      ]
+    }
+  }
+}

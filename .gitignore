@@ -1,0 +1,8 @@
+.godot/
+.tools/
+builds/*
+!builds/.gdignore
+*.tmp
+*.keystore
+*.log
+.DS_Store

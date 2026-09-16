@@ -1,0 +1,85 @@
+{
+  "format": "RGBA PNG",
+  "frame_dimensions": {
+    "width": 64,
+    "height": 64
+  },
+  "filter": "nearest",
+  "source_concept": "assets/concepts/bosses/choir_widow_reference_user_source_v1.png",
+  "runtime_kind": "boss2",
+  "animations": [
+    {
+      "id": "choir_widow",
+      "animation": "idle",
+      "frames": 4,
+      "fps": 6.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_idle_4x64.png",
+      "frame_paths": [
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_idle_4x64_0.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_idle_4x64_1.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_idle_4x64_2.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_idle_4x64_3.png"
+      ]
+    },
+    {
+      "id": "choir_widow",
+      "animation": "move",
+      "frames": 6,
+      "fps": 10.0,
+      "loop": true,
+      "sheet": "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64.png",
+      "frame_paths": [
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64_0.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64_1.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64_2.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64_3.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64_4.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_move_6x64_5.png"
+      ]
+    },
+    {
+      "id": "choir_widow",
+      "animation": "attack",
+      "frames": 4,
+      "fps": 12.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_attack_4x64.png",
+      "frame_paths": [
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_attack_4x64_0.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_attack_4x64_1.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_attack_4x64_2.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_attack_4x64_3.png"
+      ]
+    },
+    {
+      "id": "choir_widow",
+      "animation": "hurt",
+      "frames": 3,
+      "fps": 10.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_hurt_3x64.png",
+      "frame_paths": [
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_hurt_3x64_0.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_hurt_3x64_1.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_hurt_3x64_2.png"
+      ]
+    },
+    {
+      "id": "choir_widow",
+      "animation": "death",
+      "frames": 6,
+      "fps": 8.0,
+      "loop": false,
+      "sheet": "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64.png",
+      "frame_paths": [
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64_0.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64_1.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64_2.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64_3.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64_4.png",
+        "assets/sprites/pixel_64/bosses/choir_widow/animations/choir_widow_death_6x64_5.png"
+      ]
+    }
+  ]
+}

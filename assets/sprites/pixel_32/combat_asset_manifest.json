@@ -1,0 +1,196 @@
+{
+  "format": "RGBA PNG",
+  "dimensions": {
+    "width": 32,
+    "height": 32
+  },
+  "filter": "nearest",
+  "palette": {
+    "transparent": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "ink": [
+      9,
+      16,
+      42,
+      255
+    ],
+    "deep": [
+      15,
+      27,
+      63,
+      255
+    ],
+    "navy": [
+      24,
+      41,
+      87,
+      255
+    ],
+    "blue": [
+      39,
+      104,
+      171,
+      255
+    ],
+    "cyan": [
+      53,
+      231,
+      255,
+      255
+    ],
+    "ice": [
+      149,
+      246,
+      255,
+      255
+    ],
+    "violet": [
+      133,
+      109,
+      255,
+      255
+    ],
+    "purple": [
+      93,
+      62,
+      190,
+      255
+    ],
+    "pink": [
+      255,
+      92,
+      137,
+      255
+    ],
+    "coral": [
+      255,
+      145,
+      109,
+      255
+    ],
+    "orange": [
+      255,
+      189,
+      105,
+      255
+    ],
+    "mint": [
+      85,
+      246,
+      191,
+      255
+    ],
+    "green": [
+      40,
+      165,
+      133,
+      255
+    ],
+    "white": [
+      230,
+      247,
+      255,
+      255
+    ]
+  },
+  "enemies": [
+    {
+      "id": "drone",
+      "path": "assets/sprites/pixel_32/enemies/enemy_drone_32.png"
+    },
+    {
+      "id": "fan",
+      "path": "assets/sprites/pixel_32/enemies/enemy_fan_32.png"
+    },
+    {
+      "id": "charger",
+      "path": "assets/sprites/pixel_32/enemies/enemy_charger_32.png"
+    },
+    {
+      "id": "turret",
+      "path": "assets/sprites/pixel_32/enemies/enemy_turret_32.png"
+    },
+    {
+      "id": "splitter",
+      "path": "assets/sprites/pixel_32/enemies/enemy_splitter_32.png"
+    },
+    {
+      "id": "support",
+      "path": "assets/sprites/pixel_32/enemies/enemy_support_32.png"
+    },
+    {
+      "id": "sniper",
+      "path": "assets/sprites/pixel_32/enemies/enemy_sniper_32.png"
+    },
+    {
+      "id": "spiral",
+      "path": "assets/sprites/pixel_32/enemies/enemy_spiral_32.png"
+    },
+    {
+      "id": "warden",
+      "path": "assets/sprites/pixel_32/enemies/enemy_warden_32.png"
+    },
+    {
+      "id": "skirmisher",
+      "path": "assets/sprites/pixel_32/enemies/enemy_skirmisher_32.png"
+    }
+  ],
+  "weapons": [
+    {
+      "id": "pistol",
+      "path": "assets/sprites/pixel_32/weapons/weapon_pistol_32.png"
+    },
+    {
+      "id": "smg",
+      "path": "assets/sprites/pixel_32/weapons/weapon_smg_32.png"
+    },
+    {
+      "id": "shotgun",
+      "path": "assets/sprites/pixel_32/weapons/weapon_shotgun_32.png"
+    },
+    {
+      "id": "rail",
+      "path": "assets/sprites/pixel_32/weapons/weapon_rail_32.png"
+    },
+    {
+      "id": "beam",
+      "path": "assets/sprites/pixel_32/weapons/weapon_beam_32.png"
+    },
+    {
+      "id": "disc",
+      "path": "assets/sprites/pixel_32/weapons/weapon_disc_32.png"
+    },
+    {
+      "id": "arc",
+      "path": "assets/sprites/pixel_32/weapons/weapon_arc_32.png"
+    },
+    {
+      "id": "wave",
+      "path": "assets/sprites/pixel_32/weapons/weapon_wave_32.png"
+    },
+    {
+      "id": "glitch",
+      "path": "assets/sprites/pixel_32/weapons/weapon_glitch_32.png"
+    },
+    {
+      "id": "orbit",
+      "path": "assets/sprites/pixel_32/weapons/weapon_orbit_32.png"
+    },
+    {
+      "id": "blade",
+      "path": "assets/sprites/pixel_32/weapons/weapon_blade_32.png"
+    },
+    {
+      "id": "chord",
+      "path": "assets/sprites/pixel_32/weapons/weapon_chord_32.png"
+    }
+  ],
+  "contact_sheets": [
+    "assets/sprites/pixel_32/enemies/enemy_models_8x.png",
+    "assets/sprites/pixel_32/weapons/weapon_models_8x.png"
+  ]
+}
