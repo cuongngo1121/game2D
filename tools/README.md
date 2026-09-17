@@ -53,6 +53,10 @@ The required engine templates are `.tools/templates/android_debug.apk`,
 `windows_release_x86_64.exe` from the official Godot 4.5.2 template archive.
 `export_presets.cfg` references these local files. Runtime JSON under `data/` is
 included in exports; tooling, tests, documentation, and downloaded tools are not.
+Before a real Android export, `export_android.ps1` runs
+`sync_ui_layout_defaults.ps1` against the portable PC profile and packages only
+the validated UI layout snapshot. The synchronizer refuses incomplete/corrupt
+profiles and never copies checkpoint, progression, weapons, currency, or upgrades.
 
 Outputs are `builds/android/NEON-RESONANCE-debug.apk` and, with `-AlsoWindows`,
 `builds/windows/NEON-RESONANCE.exe`. Android contains ARMv7 and ARM64 libraries.

@@ -2,6 +2,7 @@ param(
     [string]$AndroidSdkPath,
     [string]$JavaSdkPath,
     [string]$DeviceSerial,
+    [string]$UiProfilePath,
     [switch]$Build,
     [switch]$Install,
     [switch]$Launch,
@@ -33,17 +34,37 @@ function Invoke-Adb([string[]]$Arguments) {
 }
 
 function Get-ConnectedDevice {
-    $lines = if ($DeviceSerial) { & $adb '-s' $DeviceSerial 'get-state' 2>$null } else { & $adb 'get-state' 2>$null }
-    if ($LASTEXITCODE -ne 0 -or (($lines -join '').Trim() -ne 'device')) {
-        $inventory = & $adb 'devices' '-l'
-        throw "Chưa có thiết bị Android ở trạng thái device. Kết quả:`n$($inventory -join "`n")`nBật Developer options + USB debugging, chấp nhận RSA prompt, rồi chạy lại."
+	# A cold ADB daemon can write its startup diagnostic to stderr and briefly
+	# reject the first get-state call while the USB transport is enumerating.
+	# Capture that diagnostic, retry the state probe, and accept only an exact
+	# `device` line so PowerShell does not turn a transient notice into a stop.
+	for ($attempt = 0; $attempt -lt 10; $attempt++) {
+		# Keep the one-element get-state command as an explicit argument. PowerShell
+		# can unwrap a one-item array during assignment; splatting that scalar would
+		# make ADB receive only its first character ("g").
+		$lines = if ($DeviceSerial) {
+			@(& $adb '-s' $DeviceSerial 'get-state' 2>&1)
+		} else {
+			@(& $adb 'get-state' 2>&1)
+		}
+		$exitCode = $LASTEXITCODE
+        $state = $lines | ForEach-Object { $_.ToString().Trim() } | Where-Object { $_ -eq 'device' } | Select-Object -Last 1
+        if ($exitCode -eq 0 -and $state -eq 'device') { return }
+        if ($attempt -lt 9) { Start-Sleep -Milliseconds 200 }
     }
+    $inventory = @(& $adb 'devices' '-l' 2>&1)
+    throw "Chưa có thiết bị Android ở trạng thái device. Kết quả:`n$($inventory -join "`n")`nBật Developer options + USB debugging, chấp nhận RSA prompt, rồi chạy lại."
 }
 
 if ($Build) {
     Push-Location $projectRoot
     try {
-        & (Join-Path $projectRoot 'tools\export_android.ps1') -AndroidSdkPath $AndroidSdkPath -JavaSdkPath $JavaSdkPath
+        $exportScript = Join-Path $projectRoot 'tools\export_android.ps1'
+        if ($UiProfilePath) {
+            & $exportScript -AndroidSdkPath $AndroidSdkPath -JavaSdkPath $JavaSdkPath -UiProfilePath $UiProfilePath
+        } else {
+            & $exportScript -AndroidSdkPath $AndroidSdkPath -JavaSdkPath $JavaSdkPath
+        }
         if ($LASTEXITCODE -ne 0) { throw 'Export Android không thành công; xem .tools/export_android.log.' }
     } finally { Pop-Location }
 }

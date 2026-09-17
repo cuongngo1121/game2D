@@ -220,6 +220,32 @@ def draw_overhead(canvas: list[list[Color]], animation: str, frame: int) -> None
             put(canvas, 28, 22, WHITE)
         return
 
+    if animation == "pulse":
+        # Pulse is a deliberate six-frame one-shot: the core charges, both
+        # arms open to release the wave, then the light collapses back into the
+        # runner. The larger world-space ring is drawn by EchoPlayer so this
+        # sheet remains a readable 32px character asset in Pixelorama.
+        charge = (0, 1, 2, 3, 2, 1)[frame % 6]
+        draw_shadow(canvas, 26, 1 if charge >= 2 else 0)
+        draw_core(canvas, dx=0, dy=-1 if charge >= 3 else 0)
+        draw_arm(canvas, -1, swing=-1 - charge // 2)
+        draw_arm(canvas, 1, swing=1 + charge // 2, recoil=1 if charge >= 2 else 0)
+        draw_head(canvas, lamp_phase=2)
+        # Frame-local pixel sparks make the authored sheet visibly animate even
+        # when the procedural world-space wave is hidden by another layer.
+        spark_color = CYAN_HI if frame in (2, 3) else CYAN
+        if charge >= 1:
+            put(canvas, 6 - charge, 16, spark_color)
+            put(canvas, 25 + charge, 16, spark_color)
+        if charge >= 2:
+            put(canvas, 9, 8 - charge // 2, PURPLE)
+            put(canvas, 21, 24 + charge // 2, PURPLE)
+        if charge >= 3:
+            rect(canvas, 12, 14, 17, 15, CYAN_HI)
+            put(canvas, 10, 16, PINK)
+            put(canvas, 19, 16, PINK)
+        return
+
     if animation == "death":
         if frame < 3:
             fall = frame
@@ -337,6 +363,7 @@ def main() -> None:
         "run_attack": (6, 12, True),
         "dash": (4, 16, False),
         "hurt": (3, 10, False),
+        "pulse": (6, 12, False),
         "death": (6, 8, False),
     }
     model = image()

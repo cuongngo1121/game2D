@@ -34,6 +34,16 @@ phát `idle/move/attack/hurt` trên unit sống. Khi unit chết, nó bị xóa 
 sách va chạm ngay lập tức để không ảnh hưởng reward hoặc gameplay, sau đó giữ
 frame chết riêng khoảng 0,75 giây để người chơi nhìn thấy hiệu ứng.
 
+Các hiệu ứng combat bổ sung được vẽ procedural trong runtime, không thay thế
+các frame pixel gốc:
+
+- `spawn`: vòng mở cổng, tia quét và các mảnh năng lượng chạy trong thời gian
+  spawn grace; unit chưa thể va chạm/tấn công trong khoảng này.
+- `fire`: recoil/muzzle flash được phát đúng lúc hazard tạo projectile, vì vậy
+  không còn lệch với attack telegraph hai beat trước đó.
+- `splitter`: marker hiển thị quả bom trung tâm và các nhánh dự kiến; projectile
+  chính dùng hình bom có fuse, sau đó hai mảnh tách dùng hình shard riêng.
+
 Sinh lại cả model tĩnh lẫn animation bằng:
 
 ```text

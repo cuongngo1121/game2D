@@ -12,7 +12,6 @@ enum State {
 
 const CYAN := Color("35e7ff")
 const LED_PURPLE := Color("d65dff")
-const FIXED_CYAN := Color("b5f7ff")
 const LOCKED := Color("756b91")
 
 var state: int = State.AVAILABLE
@@ -91,7 +90,7 @@ func _state_color() -> Color:
 		State.EQUIPPED:
 			return LED_PURPLE
 		State.FIXED:
-			return FIXED_CYAN
+			return CYAN
 		State.LOCKED:
 			return LOCKED
 		_:
@@ -109,7 +108,7 @@ func _draw() -> void:
 		draw_line(Vector2(18.0, 8.0), Vector2(size.x - 18.0, 8.0), LED_PURPLE, 1.5, true)
 		draw_line(Vector2(10.0, 20.0), Vector2(10.0, size.y - 20.0), Color(LED_PURPLE.r, LED_PURPLE.g, LED_PURPLE.b, 0.82), 1.5, true)
 	elif state == State.FIXED:
-		draw_line(Vector2(18.0, 8.0), Vector2(size.x - 18.0, 8.0), Color(FIXED_CYAN.r, FIXED_CYAN.g, FIXED_CYAN.b, 0.46), 1.0, true)
+		draw_line(Vector2(18.0, 8.0), Vector2(size.x - 18.0, 8.0), Color(CYAN.r, CYAN.g, CYAN.b, 0.46), 1.0, true)
 	elif state == State.LOCKED:
 		fill = Color(LOCKED.r, LOCKED.g, LOCKED.b, 0.05)
 	draw_rect(dock, fill, true)

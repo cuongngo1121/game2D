@@ -2,6 +2,7 @@ param(
     [string]$GodotPath,
     [string]$AndroidSdkPath,
     [string]$JavaSdkPath,
+    [string]$UiProfilePath,
     [switch]$PrepareOnly,
     [switch]$AlsoWindows
 )
@@ -41,6 +42,13 @@ try {
     & $resolvedGodot --headless --editor --path $projectRoot --log-file (Join-Path $projectRoot '.tools\export_setup.log') --script 'res://tools/setup_export.gd'
     if ($LASTEXITCODE -ne 0) { throw 'Portable Android configuration failed. See .tools/export_setup.log.' }
     if ($PrepareOnly) { Write-Output 'Export tools configured. No game build was exported.'; return }
+    $syncScript = Join-Path $projectRoot 'tools\sync_ui_layout_defaults.ps1'
+    if ($UiProfilePath) {
+        & $syncScript -ProfilePath $UiProfilePath
+    } else {
+        & $syncScript
+    }
+    if ($LASTEXITCODE -ne 0) { throw 'Đồng bộ bố cục UI từ profile PC thất bại; APK chưa được export.' }
     $androidOutput = Join-Path $projectRoot 'builds\android'
     New-Item -ItemType Directory -Force -Path $androidOutput | Out-Null
     $apkPath = Join-Path $androidOutput 'NEON-RESONANCE-debug.apk'

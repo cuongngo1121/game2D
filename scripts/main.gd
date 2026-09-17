@@ -53,7 +53,7 @@ var boundary_editor
 var show_collision_boundaries: bool = false
 # Visual route frames are separate from gameplay collision and Boundary Editor
 # polygons.  They are the cyan/purple lines visible over the map itself.
-var show_route_boundaries: bool = true
+var show_route_boundaries: bool = false
 # Combat gates are authored separately from collision polygons.  The polygon
 # stays authoritative for movement, while these rectangles identify the exact
 # corridor where the player sees the combat lock close.
@@ -280,6 +280,7 @@ func _ready() -> void:
 	ui.root.add_child(controls)
 	controls.setup(self)
 	ui.move_overlay_to_front()
+	ui.show_hud_layout_editor()
 	boundary_editor = BoundaryEditorScript.new()
 	ui.root.add_child(boundary_editor)
 	boundary_editor.setup(self)
@@ -447,6 +448,7 @@ func new_run(chosen_seed: int = 0, is_debug_session: bool = false, enable_debug_
 	debug_map_tour = is_debug_session and enable_debug_map_tour
 	assignment_demo_active = is_debug_session and enable_assignment_demo
 	debug_show_combat_barriers = false
+	show_route_boundaries = false
 	assignment_demo_props.clear()
 	assignment_intruder_id = -1
 	assignment_intruder_entered_forbidden = false
@@ -805,6 +807,7 @@ func continue_run() -> void:
 		return
 	debug_session = false
 	assignment_demo_active = false
+	show_route_boundaries = false
 	seed_value = int(checkpoint.seed)
 	stage_index = int(checkpoint.stage)
 	room_index = int(checkpoint.room)
@@ -873,7 +876,13 @@ func enter_room(index: int, preserve_player_position: bool = false) -> void:
 		if index == 5:
 			portals.append({"pos": Vector2(arena.end.x - 112, 432), "room": 6})
 	state = "playing"
-	controls.reset()
+	# A connected-route walk-in is still the same live input session. Resetting
+	# here clears the touch stick/finger (and disarms held keyboard movement) just
+	# as the player crosses the room boundary, which can strand them in the
+	# corridor before the pending chamber is reached. Direct room/overlay entries
+	# keep the full input reset behavior.
+	if not preserve_player_position:
+		controls.reset()
 	ui.hide_overlay()
 	rhythm.resume_music()
 	if is_assignment_demo():
@@ -1167,21 +1176,26 @@ func apply_route_combat_barriers(next_barriers: Array[Dictionary]) -> void:
 	if room_view != null:
 		room_view.queue_redraw()
 
-func active_combat_barrier_rects() -> Array[Rect2]:
-	var debug_preview_active := is_debug_map_tour() and debug_show_combat_barriers and state == "playing"
-	if (not combat_active and not debug_preview_active) or not is_open_route_stage():
+func authored_combat_barrier_rects() -> Array[Rect2]:
+	if not is_open_route_stage():
 		return []
 	ensure_route_combat_barriers()
-	# A combat lock now covers the whole connected map, rather than only gates
-	# carrying the current room's editor label.  This prevents an earlier-room
-	# gate from disappearing when the player fights farther along the route.
-	var active_rects: Array[Rect2] = []
+	var barrier_rects: Array[Rect2] = []
 	for barrier in route_barriers_art:
 		var art_rect: Rect2 = barrier.get("rect", Rect2())
 		if art_rect.size.x <= 0.0 or art_rect.size.y <= 0.0:
 			continue
-		active_rects.append(route_art_to_world_rect(art_rect))
-	return active_rects
+		barrier_rects.append(route_art_to_world_rect(art_rect))
+	return barrier_rects
+
+func active_combat_barrier_rects() -> Array[Rect2]:
+	var debug_preview_active := is_debug_map_tour() and debug_show_combat_barriers and state == "playing"
+	if (not combat_active and not debug_preview_active) or not is_open_route_stage():
+		return []
+	# A combat lock now covers the whole connected map, rather than only gates
+	# carrying the current room's editor label.  This prevents an earlier-room
+	# gate from disappearing when the player fights farther along the route.
+	return authored_combat_barrier_rects()
 
 func is_blocked_by_active_combat_barrier(pos: Vector2, body_radius: float = 0.0) -> bool:
 	# F6/O may display gate models outside combat, but only an active encounter
@@ -1189,7 +1203,7 @@ func is_blocked_by_active_combat_barrier(pos: Vector2, body_radius: float = 0.0)
 	# reliable collision thickness while RoomView keeps rendering it as a line.
 	if not combat_active or not is_open_route_stage():
 		return false
-	for barrier in active_combat_barrier_rects():
+	for barrier in authored_combat_barrier_rects():
 		if barrier.grow(body_radius).has_point(pos):
 			return true
 	return false
@@ -1425,7 +1439,15 @@ func has_reached_combat_chamber(pos: Vector2, body_radius: float = 0.0) -> bool:
 		return false
 	# Shrink the trigger by the player collider so merely brushing a doorway does
 	# not prematurely close the route behind NOCTIS.
-	return trigger.grow(-body_radius).has_point(pos) and _is_position_in_polygons(pos, body_radius, route_room_polygons(room_index))
+	return trigger.grow(-body_radius).has_point(pos) and _is_position_in_polygons(pos, body_radius, route_room_polygons(room_index)) and not is_inside_authored_combat_barrier(pos, body_radius)
+
+func is_inside_authored_combat_barrier(pos: Vector2, body_radius: float = 0.0) -> bool:
+	if not is_open_route_stage():
+		return false
+	for barrier in authored_combat_barrier_rects():
+		if barrier.grow(body_radius).has_point(pos):
+			return true
+	return false
 
 func has_reached_boss_chamber(pos: Vector2, body_radius: float = 0.0) -> bool:
 	if not is_open_route_stage() or room_index != 5:
@@ -2186,9 +2208,161 @@ func draw_effects(canvas: Node2D) -> void:
 		canvas.draw_arc(effect.pos, maxf(1, effect.radius * progress), 0, TAU, 32, color, 2)
 	if weapon_system != null:
 		for line in weapon_system.beam_lines:
-			canvas.draw_line(line.from, line.to, line.color, 3)
+			var duration: float = maxf(0.001, float(line.get("duration", 0.2)))
+			var fade: float = clampf(float(line.get("time", 0.0)) / duration, 0.0, 1.0)
+			if str(line.get("style", "prism_beam")) == "chain_lightning":
+				_draw_chain_lightning(canvas, line, fade)
+			else:
+				_draw_prism_beam(canvas, line, fade)
+		for slash in weapon_system.slash_effects:
+			_draw_resonance_slash(canvas, slash)
+		for muzzle in weapon_system.muzzle_effects:
+			_draw_weapon_muzzle(canvas, muzzle)
 		if weapon_system.orbit_time > 0:
-			for i in range(3):
-				var at: Vector2 = player.position + Vector2.from_angle(elapsed * 4.5 + i * TAU / 3) * 64
-				canvas.draw_circle(at, 8, Color("35e7ff"))
-				canvas.draw_circle(at, 3, Color("e6f7ff"))
+			_draw_orbit_driver(canvas)
+
+func _draw_prism_beam(canvas: Node2D, line: Dictionary, fade: float) -> void:
+	var from: Vector2 = line.from
+	var to: Vector2 = line.to
+	var delta: Vector2 = to - from
+	var length: float = delta.length()
+	if length < 0.1:
+		return
+	var direction: Vector2 = delta / length
+	var color: Color = line.get("color", Color("35e7ff"))
+	var accent: Color = line.get("accent", Color("f5ffff"))
+	var age: float = float(line.get("age", 0.0))
+	var phase: float = float(line.get("phase", 0.0))
+	canvas.draw_line(from, to, Color(0.02, 0.04, 0.10, 0.72 * fade), 15.0, true)
+	canvas.draw_line(from, to, Color(color, 0.18 * fade), 11.0, true)
+	canvas.draw_line(from, to, Color(color, 0.68 * fade), 6.0, true)
+	canvas.draw_line(from, to, Color(accent, 0.92 * fade), 2.0, true)
+	var scan_distance: float = fposmod(age * 980.0 + phase * 40.0, length)
+	var scan: Vector2 = from + direction * scan_distance
+	_draw_effect_diamond(canvas, scan, direction, 8.0, Color(accent, 0.86 * fade), 1.7)
+	_draw_effect_diamond(canvas, to, direction, 9.0, Color(color, 0.80 * fade), 1.5)
+
+func _draw_chain_lightning(canvas: Node2D, line: Dictionary, fade: float) -> void:
+	var from: Vector2 = line.from
+	var to: Vector2 = line.to
+	var delta: Vector2 = to - from
+	var length: float = delta.length()
+	if length < 0.1:
+		return
+	var direction: Vector2 = delta / length
+	var normal: Vector2 = direction.orthogonal()
+	var color: Color = line.get("color", Color("9b4dff"))
+	var accent: Color = line.get("accent", Color("f1d8ff"))
+	var phase: float = float(line.get("phase", 0.0))
+	var points := PackedVector2Array()
+	var segments: int = 5
+	for index in range(segments + 1):
+		var ratio: float = float(index) / float(segments)
+		var offset: float = 0.0
+		if index > 0 and index < segments:
+			offset = sin(phase + elapsed * 42.0 + float(index) * 2.4) * minf(8.0, length * 0.08)
+		points.append(from.lerp(to, ratio) + normal * offset)
+	canvas.draw_polyline(points, Color(0.05, 0.02, 0.12, 0.68 * fade), 10.0, true)
+	canvas.draw_polyline(points, Color(color, 0.30 * fade), 7.0, true)
+	canvas.draw_polyline(points, Color(color, 0.86 * fade), 3.0, true)
+	canvas.draw_polyline(points, Color(accent, 0.95 * fade), 1.2, true)
+	for index in range(1, segments):
+		var node: Vector2 = points[index]
+		canvas.draw_circle(node, 3.5, Color(color, 0.28 * fade))
+		canvas.draw_circle(node, 1.2, Color(accent, 0.95 * fade))
+	canvas.draw_circle(from, 4.0, Color(accent, 0.88 * fade))
+	canvas.draw_circle(to, 5.0, Color(color, 0.75 * fade))
+
+func _draw_resonance_slash(canvas: Node2D, slash: Dictionary) -> void:
+	var duration: float = maxf(0.001, float(slash.get("duration", 0.24)))
+	var progress: float = clampf(float(slash.get("time", 0.0)) / duration, 0.0, 1.0)
+	var fade: float = 1.0 - progress
+	var center: Vector2 = slash.center
+	var direction: Vector2 = slash.direction
+	var angle: float = direction.angle()
+	var radius: float = float(slash.get("radius", 82.0)) * (0.55 + 0.48 * sqrt(progress))
+	var sweep: float = 0.72 + progress * 0.44
+	var color: Color = slash.get("color", Color("35e7ff"))
+	var accent: Color = slash.get("accent", Color("d7a6ff"))
+	var start_angle: float = angle - sweep
+	var end_angle: float = angle + sweep
+	var wedge := PackedVector2Array([center])
+	for index in range(13):
+		wedge.append(center + Vector2.from_angle(lerpf(start_angle, end_angle, float(index) / 12.0)) * radius)
+	canvas.draw_colored_polygon(wedge, Color(color, 0.055 * fade))
+	canvas.draw_arc(center, radius, start_angle, end_angle, 20, Color(color, 0.20 * fade), 12.0, true)
+	canvas.draw_arc(center, radius, start_angle, end_angle, 20, Color(color, 0.82 * fade), 5.0, true)
+	canvas.draw_arc(center, radius - 7.0, start_angle + 0.06, end_angle - 0.06, 18, Color(accent, 0.95 * fade), 1.8, true)
+	var tip: Vector2 = center + direction * radius
+	_draw_effect_diamond(canvas, tip, direction, 8.0 + progress * 3.0, Color(accent, 0.88 * fade), 1.5)
+
+func _draw_weapon_muzzle(canvas: Node2D, muzzle: Dictionary) -> void:
+	var duration: float = maxf(0.001, float(muzzle.get("duration", 0.13)))
+	var progress: float = clampf(float(muzzle.get("time", 0.0)) / duration, 0.0, 1.0)
+	var fade: float = 1.0 - progress
+	var pos: Vector2 = muzzle.pos
+	var direction: Vector2 = muzzle.direction
+	var normal: Vector2 = direction.orthogonal()
+	var color: Color = muzzle.get("color", Color("35e7ff"))
+	var accent: Color = muzzle.get("accent", Color("e6f7ff"))
+	var visual: String = str(muzzle.get("visual", "pulse_orb"))
+	var length: float = 12.0 + progress * 8.0
+	match visual:
+		"pellet_shard":
+			for index in range(-2, 3):
+				var spread: float = float(index) * 0.12
+				var ray: Vector2 = direction.rotated(spread)
+				canvas.draw_line(pos + ray * 3.0, pos + ray * (length + absf(index) * 3.0), Color(accent, 0.78 * fade), 2.0, true)
+		"prism_beam", "rail_spear":
+			canvas.draw_line(pos - direction * 4.0, pos + direction * length, Color(color, 0.24 * fade), 10.0, true)
+			canvas.draw_line(pos, pos + direction * length, Color(accent, 0.88 * fade), 3.0, true)
+			_draw_effect_diamond(canvas, pos + direction * length, direction, 6.0, Color(accent, 0.9 * fade), 1.0)
+		"echo_disc":
+			canvas.draw_arc(pos + direction * 4.0, 9.0 + progress * 3.0, direction.angle() - 1.5, direction.angle() + 1.5, 16, Color(color, 0.82 * fade), 2.0, true)
+		"chain_lightning":
+			for index in range(4):
+				var ray_angle: float = direction.angle() + (float(index) - 1.5) * 0.28
+				canvas.draw_line(pos, pos + Vector2.from_angle(ray_angle) * (10.0 + index * 3.0), Color(accent, 0.76 * fade), 1.2, true)
+		"sonic_wave":
+			for index in range(2):
+				canvas.draw_arc(pos + direction * (4.0 + index * 3.0), 7.0 + index * 4.0, direction.angle() - 1.0, direction.angle() + 1.0, 12, Color(color, (0.82 - index * 0.2) * fade), 2.0, true)
+		"glitch_charge":
+			for index in range(3):
+				var offset: float = (float(index) - 1.0) * 4.0
+				canvas.draw_line(pos + normal * offset - direction * 3.0, pos + normal * offset + direction * 6.0, Color(accent, (0.8 - index * 0.12) * fade), 1.5, true)
+		"orbit_satellite":
+			canvas.draw_arc(pos, 8.0 + progress * 3.0, 0.0, TAU, 16, Color(color, 0.7 * fade), 1.5, true)
+		"resonance_slash":
+			canvas.draw_arc(pos + direction * 4.0, 13.0 + progress * 6.0, direction.angle() - 0.9, direction.angle() + 0.9, 14, Color(accent, 0.85 * fade), 2.0, true)
+		"chord_note":
+			canvas.draw_circle(pos + direction * 4.0, 4.0 + progress * 2.0, Color(color, 0.62 * fade))
+			canvas.draw_arc(pos + direction * 4.0, 8.0 + progress * 2.0, 0.0, TAU, 12, Color(accent, 0.74 * fade), 1.0, true)
+		_:
+			canvas.draw_line(pos, pos + direction * length, Color(accent, 0.82 * fade), 2.0, true)
+	canvas.draw_circle(pos, 3.0 + progress * 2.0, Color(accent, 0.72 * fade))
+
+func _draw_orbit_driver(canvas: Node2D) -> void:
+	var remaining: float = clampf(weapon_system.orbit_time / 4.0, 0.0, 1.0)
+	var fade: float = minf(1.0, remaining * 2.2)
+	var spin: float = weapon_system.orbit_phase + elapsed * 4.5
+	var orbit_center: Vector2 = player.position
+	canvas.draw_arc(orbit_center, 64.0, spin, spin + TAU, 40, Color("73ffc7", 0.22 * fade), 2.0, true)
+	canvas.draw_arc(orbit_center, 58.0, -spin * 0.7, -spin * 0.7 + TAU * 0.62, 20, Color("e2fff4", 0.32 * fade), 1.0, true)
+	for index in range(3):
+		var angle: float = spin + float(index) * TAU / 3.0
+		var at: Vector2 = orbit_center + Vector2.from_angle(angle) * 64.0
+		var tangent: Vector2 = Vector2.from_angle(angle + PI * 0.5)
+		canvas.draw_line(at - tangent * 10.0, at + tangent * 10.0, Color("73ffc7", 0.22 * fade), 4.0, true)
+		_draw_effect_diamond(canvas, at, Vector2.from_angle(angle), 9.0, Color("73ffc7", 0.9 * fade), 1.5)
+		canvas.draw_circle(at, 3.0, Color("e2fff4", 0.95 * fade))
+
+func _draw_effect_diamond(canvas: Node2D, center: Vector2, direction: Vector2, length: float, color: Color, width: float) -> void:
+	var normal: Vector2 = direction.orthogonal()
+	var points := PackedVector2Array([
+		center + direction * length,
+		center + normal * (length * 0.42),
+		center - direction * length,
+		center - normal * (length * 0.42),
+		center + direction * length,
+	])
+	canvas.draw_polyline(points, color, width, true)

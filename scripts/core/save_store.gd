@@ -4,13 +4,46 @@ extends RefCounted
 
 const SCHEMA_VERSION: int = 1
 const PROFILE_PATH: String = "user://profile.json"
+const UI_LAYOUT_DEFAULTS_PATH: String = "res://data/ui_layout_defaults.json"
 const MAX_FILE_BYTES: int = 524288
 const SETTINGS_LAYOUT_GROUP_IDS := ["title", "audio", "controls", "save"]
+const HUD_LAYOUT_ITEM_IDS := ["hp", "shield", "energy", "title", "weapon", "pause", "boss"]
+const TOUCH_LAYOUT_ITEM_IDS := ["move", "fire", "dash", "pulse"]
+const PAUSE_LAYOUT_ITEM_IDS := ["title", "continue", "settings", "menu"]
+const REWARD_LAYOUT_ITEM_IDS := [
+	"title",
+	"card_01", "card_01_title", "card_01_description",
+	"card_02", "card_02_title", "card_02_description",
+	"card_03", "card_03_title", "card_03_description",
+	"repair",
+]
+const SUPPORT_LAYOUT_ITEM_IDS := [
+	"title", "status",
+	"card_01", "card_01_icon", "card_01_title", "card_01_description",
+	"card_02", "card_02_icon", "card_02_title", "card_02_description",
+	"card_03", "card_03_icon", "card_03_title", "card_03_description",
+	"back",
+]
+const ARMORY_LAYOUT_ITEM_IDS := [
+	"title",
+	"pistol_stt", "pistol_name", "pistol_action",
+	"smg_stt", "smg_name", "smg_action",
+	"shotgun_stt", "shotgun_name", "shotgun_action",
+	"rail_stt", "rail_name", "rail_action",
+	"beam_stt", "beam_name", "beam_action",
+	"disc_stt", "disc_name", "disc_action",
+	"arc_stt", "arc_name", "arc_action",
+	"wave_stt", "wave_name", "wave_action",
+	"glitch_stt", "glitch_name", "glitch_action",
+	"orbit_stt", "orbit_name", "orbit_action",
+	"blade_stt", "blade_name", "blade_action",
+	"chord_stt", "chord_name", "chord_action",
+]
 const DEFAULT_SETTINGS: Dictionary = {
 	"music": 0.65, "sfx": 0.7, "vibration": true, "screen_shake": 0.4,
 	"reduced_flashes": false, "quality": 1, "latency_ms": 0.0,
 	"touch_scale": 1.0, "touch_opacity": 0.65, "auto_aim": true,
-	"music_enabled": true, "sfx_enabled": true, "settings_layout_positions": {},
+	"music_enabled": true, "sfx_enabled": true, "settings_layout_positions": {}, "hud_layout": {}, "touch_layout": {}, "pause_layout": {}, "reward_layout": {}, "support_layout": {}, "armory_layout": {},
 }
 const DEFAULT_META: Dictionary = {
 	"shards": 0, "unlocked": ["pistol", "smg", "shotgun", "rail"],
@@ -28,7 +61,38 @@ func _init(path: String = PROFILE_PATH) -> void:
 
 
 func default_profile() -> Dictionary:
-	return {"settings": DEFAULT_SETTINGS.duplicate(true), "meta": DEFAULT_META.duplicate(true), "checkpoint": {}}
+	var settings: Dictionary = DEFAULT_SETTINGS.duplicate(true)
+	settings.merge(_load_ui_layout_defaults(), true)
+	return {"settings": settings, "meta": DEFAULT_META.duplicate(true), "checkpoint": {}}
+
+
+func _load_ui_layout_defaults() -> Dictionary:
+	var output: Dictionary = {}
+	if not FileAccess.file_exists(UI_LAYOUT_DEFAULTS_PATH):
+		return output
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(UI_LAYOUT_DEFAULTS_PATH))
+	if not parsed is Dictionary:
+		return output
+	var defaults: Dictionary = parsed
+	if _number_between(defaults.get("touch_scale"), 0.7, 1.5):
+		output["touch_scale"] = clampf(float(defaults["touch_scale"]), 0.7, 1.5)
+	if _number_between(defaults.get("touch_opacity"), 0.2, 1.0):
+		output["touch_opacity"] = clampf(float(defaults["touch_opacity"]), 0.2, 1.0)
+	if defaults.get("settings_layout_positions") is Dictionary:
+		output["settings_layout_positions"] = _normalize_settings_layout_positions(defaults["settings_layout_positions"])
+	if defaults.get("hud_layout") is Dictionary:
+		output["hud_layout"] = _normalize_hud_layout(defaults["hud_layout"])
+	if defaults.get("touch_layout") is Dictionary:
+		output["touch_layout"] = _normalize_touch_layout(defaults["touch_layout"])
+	if defaults.get("pause_layout") is Dictionary:
+		output["pause_layout"] = _normalize_pause_layout(defaults["pause_layout"])
+	if defaults.get("reward_layout") is Dictionary:
+		output["reward_layout"] = _normalize_reward_layout(defaults["reward_layout"])
+	if defaults.get("support_layout") is Dictionary:
+		output["support_layout"] = _normalize_support_layout(defaults["support_layout"])
+	if defaults.get("armory_layout") is Dictionary:
+		output["armory_layout"] = _normalize_armory_layout(defaults["armory_layout"])
+	return output
 
 
 func load_profile() -> Dictionary:
@@ -157,7 +221,26 @@ func _normalize_profile(profile: Dictionary) -> Dictionary:
 		if _integer_between(settings.get("quality"), 0, 2):
 			output["settings"]["quality"] = int(settings["quality"])
 		if settings.get("settings_layout_positions") is Dictionary:
-			output["settings"]["settings_layout_positions"] = _normalize_settings_layout_positions(settings["settings_layout_positions"])
+			var normalized_settings_layout := _normalize_settings_layout_positions(settings["settings_layout_positions"])
+			output["settings"]["settings_layout_positions"].merge(normalized_settings_layout, true)
+		if settings.get("hud_layout") is Dictionary:
+			var normalized_hud_layout := _normalize_hud_layout(settings["hud_layout"])
+			output["settings"]["hud_layout"].merge(normalized_hud_layout, true)
+		if settings.get("touch_layout") is Dictionary:
+			var normalized_touch_layout := _normalize_touch_layout(settings["touch_layout"])
+			output["settings"]["touch_layout"].merge(normalized_touch_layout, true)
+		if settings.get("pause_layout") is Dictionary:
+			var normalized_pause_layout := _normalize_pause_layout(settings["pause_layout"])
+			output["settings"]["pause_layout"].merge(normalized_pause_layout, true)
+		if settings.get("reward_layout") is Dictionary:
+			var normalized_reward_layout := _normalize_reward_layout(settings["reward_layout"])
+			output["settings"]["reward_layout"].merge(normalized_reward_layout, true)
+		if settings.get("support_layout") is Dictionary:
+			var normalized_support_layout := _normalize_support_layout(settings["support_layout"])
+			output["settings"]["support_layout"].merge(normalized_support_layout, true)
+		if settings.get("armory_layout") is Dictionary:
+			var normalized_armory_layout := _normalize_armory_layout(settings["armory_layout"])
+			output["settings"]["armory_layout"].merge(normalized_armory_layout, true)
 	if profile.get("meta") is Dictionary:
 		var meta: Dictionary = profile["meta"]
 		for key: String in ["shards", "wins", "runs", "kills"]:
@@ -184,6 +267,102 @@ func _normalize_settings_layout_positions(value: Dictionary) -> Dictionary:
 		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
 			continue
 		output[group_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0)]
+	return output
+
+
+func _normalize_hud_layout(value: Dictionary) -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in HUD_LAYOUT_ITEM_IDS:
+		var encoded: Variant = value.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
+			continue
+		if not _number_between(encoded[2], 0.55, 2.0) or not _number_between(encoded[3], 0.55, 2.0):
+			continue
+		output[item_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0), clampf(float(encoded[2]), 0.55, 2.0), clampf(float(encoded[3]), 0.55, 2.0)]
+	# Migrate the former combined resources frame into three independent bars.
+	# Only fill missing new entries, so an already-customized bar remains intact.
+	var legacy: Variant = value.get("resources")
+	if legacy is Array and legacy.size() == 4 and _number_between(legacy[0], 0.0, 1280.0) and _number_between(legacy[1], 0.0, 720.0) and _number_between(legacy[2], 0.55, 2.0) and _number_between(legacy[3], 0.55, 2.0):
+		var legacy_position := Vector2(float(legacy[0]), float(legacy[1]))
+		var legacy_scale := Vector2(clampf(float(legacy[2]), 0.55, 2.0), clampf(float(legacy[3]), 0.55, 2.0))
+		var offsets := {"hp": Vector2(84, 31), "shield": Vector2(84, 49), "energy": Vector2(84, 67)}
+		for item_id: String in offsets:
+			if output.has(item_id):
+				continue
+			var position: Vector2 = legacy_position + offsets[item_id] * legacy_scale
+			output[item_id] = [clampf(position.x, 0.0, 1280.0), clampf(position.y, 0.0, 720.0), legacy_scale.x, legacy_scale.y]
+	return output
+
+
+func _normalize_touch_layout(value: Dictionary) -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in TOUCH_LAYOUT_ITEM_IDS:
+		var encoded: Variant = value.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
+			continue
+		if not _number_between(encoded[2], 0.55, 2.0) or not _number_between(encoded[3], 0.55, 2.0):
+			continue
+		output[item_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0), clampf(float(encoded[2]), 0.55, 2.0), clampf(float(encoded[3]), 0.55, 2.0)]
+	return output
+
+
+func _normalize_pause_layout(value: Dictionary) -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in PAUSE_LAYOUT_ITEM_IDS:
+		var encoded: Variant = value.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
+			continue
+		if not _number_between(encoded[2], 0.55, 2.0) or not _number_between(encoded[3], 0.55, 2.0):
+			continue
+		output[item_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0), clampf(float(encoded[2]), 0.55, 2.0), clampf(float(encoded[3]), 0.55, 2.0)]
+	return output
+
+
+func _normalize_reward_layout(value: Dictionary) -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in REWARD_LAYOUT_ITEM_IDS:
+		var encoded: Variant = value.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
+			continue
+		if not _number_between(encoded[2], 0.55, 2.0) or not _number_between(encoded[3], 0.55, 2.0):
+			continue
+		output[item_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0), clampf(float(encoded[2]), 0.55, 2.0), clampf(float(encoded[3]), 0.55, 2.0)]
+	return output
+
+
+func _normalize_support_layout(value: Dictionary) -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in SUPPORT_LAYOUT_ITEM_IDS:
+		var encoded: Variant = value.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
+			continue
+		if not _number_between(encoded[2], 0.55, 2.0) or not _number_between(encoded[3], 0.55, 2.0):
+			continue
+		output[item_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0), clampf(float(encoded[2]), 0.55, 2.0), clampf(float(encoded[3]), 0.55, 2.0)]
+	return output
+
+
+func _normalize_armory_layout(value: Dictionary) -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in ARMORY_LAYOUT_ITEM_IDS:
+		var encoded: Variant = value.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not _number_between(encoded[0], 0.0, 1280.0) or not _number_between(encoded[1], 0.0, 720.0):
+			continue
+		if not _number_between(encoded[2], 0.55, 2.0) or not _number_between(encoded[3], 0.55, 2.0):
+			continue
+		output[item_id] = [clampf(float(encoded[0]), 0.0, 1280.0), clampf(float(encoded[1]), 0.0, 720.0), clampf(float(encoded[2]), 0.55, 2.0), clampf(float(encoded[3]), 0.55, 2.0)]
 	return output
 
 

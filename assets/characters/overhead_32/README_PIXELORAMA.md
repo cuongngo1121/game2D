@@ -20,4 +20,9 @@ nearest-neighbor filtering. Enable looping only for `idle`, `run`, and
 | run_attack | 6 | 12 | yes while the firing window is active |
 | dash | 4 | 16 | no |
 | hurt | 3 | 10 | no |
+| pulse | 6 | 12 | no |
 | death | 6 | 8 | no |
+
+`pulse` is the six-frame one-shot used when Resonance reaches 100. The sprite
+frames animate the runner's charge/release pose; the expanding world-space
+wave is drawn by `EchoPlayer` so its radius follows the Pulse upgrade level.

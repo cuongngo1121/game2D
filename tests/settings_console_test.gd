@@ -6,6 +6,8 @@ const MainScene = preload("res://scenes/main.tscn")
 const SaveScript = preload("res://scripts/core/save_store.gd")
 const SETTINGS_ART_PATH := "res://assets/backgrounds/settings_calibration_console_v2.png"
 const VIEWPORT_RECT := Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+const CYAN := Color("35e7ff")
+const LED_PURPLE := Color("d65dff")
 const SETTINGS_PLAIN_HEADINGS := [
 	"CÀI ĐẶT",
 	"◼  ÂM THANH & TRẢI NGHIỆM",
@@ -32,6 +34,8 @@ func _run() -> void:
 	var save_action := _save_action()
 	_check(_has_settings_art(), "Settings uses the clean exterior calibration-console artwork")
 	_check(_settings_headings_have_no_led_effect(), "Settings title and section headings keep only their text color")
+	_check(_settings_text_uses_section_colors(sliders, toggles), "Settings text follows the cyan audio and purple controls themes")
+	_check(save_action != null and save_action.get_theme_font("font") == game.ui.bold, "Settings save action uses the bold font")
 	_check(sliders.size() == 6, "Settings retains all six functional sliders")
 	_check(_slider_ids(sliders) == ["music", "sfx", "latency_ms", "screen_shake", "touch_scale", "touch_opacity"], "Slider order and setting bindings remain stable")
 	_check(toggles.size() == 3, "Settings retains all three functional switches")
@@ -104,6 +108,50 @@ func _settings_headings_have_no_led_effect() -> bool:
 		if child.get_theme_constant("outline_size") != 0 or child.get_theme_constant("shadow_outline_size") != 0:
 			return false
 	return found == SETTINGS_PLAIN_HEADINGS.size()
+
+func _settings_text_uses_section_colors(sliders: Array[HSlider], toggles: Array[Button]) -> bool:
+	var expected_headings := {
+		"CÀI ĐẶT": CYAN,
+		"◼  ÂM THANH & TRẢI NGHIỆM": CYAN,
+		"◼  ĐIỀU KHIỂN & GIAO DIỆN": LED_PURPLE,
+	}
+	var found_headings := 0
+	for child in game.ui.overlay.find_children("*", "", true, false):
+		if child is Label and expected_headings.has(child.text):
+			found_headings += 1
+			if child.get_theme_color("font_color") != expected_headings[child.text]:
+				return false
+	if found_headings != expected_headings.size():
+		return false
+
+	for key in ["music", "sfx", "latency_ms", "screen_shake"]:
+		if not _slider_text_has_color(str(key), CYAN):
+			return false
+	for key in ["touch_scale", "touch_opacity"]:
+		if not _slider_text_has_color(str(key), LED_PURPLE):
+			return false
+
+	for toggle in toggles:
+		var original_state := toggle.button_pressed
+		game.ui.apply_toggle_visual(toggle, false, LED_PURPLE)
+		if toggle.get_theme_color("font_color") != LED_PURPLE or toggle.get_theme_color("font_hover_color") != LED_PURPLE:
+			return false
+		game.ui.apply_toggle_visual(toggle, true, LED_PURPLE)
+		if toggle.get_theme_color("font_color") != LED_PURPLE or toggle.get_theme_color("font_hover_color") != LED_PURPLE:
+			return false
+		game.ui.apply_toggle_visual(toggle, original_state, LED_PURPLE)
+	return true
+
+func _slider_text_has_color(key: String, expected: Color) -> bool:
+	var slider := _slider(key)
+	if slider == null:
+		return false
+	var shell := slider.get_parent()
+	if shell == null:
+		return false
+	var name_label := shell.get_node_or_null(NodePath("Settings_%s_Label" % key))
+	var value_label := shell.get_node_or_null(NodePath("Settings_%s_Value" % key))
+	return name_label is Label and value_label is Label and name_label.get_theme_color("font_color") == expected and value_label.get_theme_color("font_color") == expected
 
 func _verify_temporary_layout_editor_in_normal_game() -> void:
 	var calibration_game = MainScene.instantiate()

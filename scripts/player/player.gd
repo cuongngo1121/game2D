@@ -21,6 +21,8 @@ const PIXEL_WEAPON_FLASH_RECT := Rect2(23, 4, 7, 6)
 const WEAPON_RECOIL_DURATION := 0.18
 const WEAPON_RECOIL_FPS := 18.0
 const ATTACK_ANIMATION_DURATION := 6.0 / 12.0
+const PULSE_ANIMATION_DURATION := 6.0 / 12.0
+const SHIELD_HIT_ANIMATION_DURATION := 0.42
 const PIXEL_ANIMATION_CONFIG := {
 	"idle": {"file": "echo_runner_overhead_idle_4x32.png", "frames": 4, "fps": 6.0},
 	"run": {"file": "echo_runner_overhead_run_6x32.png", "frames": 6, "fps": 10.0},
@@ -28,6 +30,7 @@ const PIXEL_ANIMATION_CONFIG := {
 	"run_attack": {"file": "echo_runner_overhead_run_attack_6x32.png", "frames": 6, "fps": 12.0},
 	"dash": {"file": "echo_runner_overhead_dash_4x32.png", "frames": 4, "fps": 16.0},
 	"hurt": {"file": "echo_runner_overhead_hurt_3x32.png", "frames": 3, "fps": 10.0},
+	"pulse": {"file": "echo_runner_overhead_pulse_6x32.png", "frames": 6, "fps": 12.0},
 	"death": {"file": "echo_runner_overhead_death_6x32.png", "frames": 6, "fps": 8.0},
 }
 
@@ -65,6 +68,11 @@ var pixel_animation_frame: int = 0
 var pixel_animation_elapsed: float = 0.0
 var attack_animation_time: float = 0.0
 var hurt_animation_time: float = 0.0
+var pulse_animation_time: float = 0.0
+var pulse_visual_radius: float = 155.0
+var shield_hit_animation_time: float = 0.0
+var shield_hit_angle: float = 0.0
+var shield_hit_broken: bool = false
 var dash_visual_time: float = 0.0
 var follow_camera: Camera2D
 var weapon_recoil_time: float = 0.0
@@ -148,6 +156,11 @@ func reset_visual_animation() -> void:
 	pixel_animation_elapsed = 0.0
 	attack_animation_time = 0.0
 	hurt_animation_time = 0.0
+	pulse_animation_time = 0.0
+	pulse_visual_radius = 155.0
+	shield_hit_animation_time = 0.0
+	shield_hit_angle = 0.0
+	shield_hit_broken = false
 	dash_visual_time = 0.0
 	weapon_recoil_time = 0.0
 
@@ -168,6 +181,14 @@ func play_hurt_animation() -> void:
 		pixel_animation_elapsed = 0.0
 	hurt_animation_time = maxf(hurt_animation_time, 0.3)
 
+func play_pulse_animation(reach: float = 155.0) -> void:
+	if hp <= 0:
+		return
+	if pixel_animation_name != "pulse":
+		pixel_animation_elapsed = 0.0
+	pulse_animation_time = maxf(pulse_animation_time, PULSE_ANIMATION_DURATION)
+	pulse_visual_radius = maxf(60.0, reach)
+
 func visual_animation() -> String:
 	if hp <= 0:
 		return "death"
@@ -175,6 +196,8 @@ func visual_animation() -> String:
 		return "dash"
 	if hurt_animation_time > 0:
 		return "hurt"
+	if pulse_animation_time > 0:
+		return "pulse"
 	if attack_animation_time > 0:
 		return "run_attack" if move_direction.length_squared() > 0.01 else "attack"
 	if move_direction.length_squared() > 0.01:
@@ -215,6 +238,8 @@ func _process(delta: float) -> void:
 	attack_flash = maxf(0, attack_flash - delta)
 	attack_animation_time = maxf(0, attack_animation_time - delta)
 	hurt_animation_time = maxf(0, hurt_animation_time - delta)
+	pulse_animation_time = maxf(0, pulse_animation_time - delta)
+	shield_hit_animation_time = maxf(0, shield_hit_animation_time - delta)
 	dash_visual_time = maxf(0, dash_visual_time - delta)
 	weapon_recoil_time = maxf(0, weapon_recoil_time - delta)
 	if pixel_character_enabled:
@@ -297,6 +322,7 @@ func pulse() -> bool:
 		return false
 	resonance = 0
 	var reach: float = 155 + 32 * stacks("pulse")
+	play_pulse_animation(reach)
 	game.enemies.damage_in_radius(position, reach, 95 + 30 * stacks("pulse"))
 	game.projectiles.erase_in_radius(position, reach)
 	game.add_fx(position, Color("9b4dff"), reach)
@@ -310,6 +336,9 @@ func take_damage(amount: float) -> void:
 	var absorbed: float = minf(shield, amount)
 	shield -= absorbed
 	hp = maxf(0, hp - (amount - absorbed))
+	shield_hit_animation_time = SHIELD_HIT_ANIMATION_DURATION
+	shield_hit_angle = fposmod(animation_time * 2.3 + amount * 0.031, TAU)
+	shield_hit_broken = shield <= 0.0 and absorbed > 0.0
 	invulnerable = 0.85
 	since_damage = 0
 	regen_announced = false
@@ -345,8 +374,10 @@ func _draw() -> void:
 		draw_set_transform(Vector2(0, 12), 0, Vector2(1, 0.4))
 		draw_circle(Vector2.ZERO, 16, Color(0, 0, 0, 0.45))
 		draw_set_transform(Vector2.ZERO)
-	if invulnerable > 0:
-		draw_arc(Vector2.ZERO, 21, 0, TAU, 20, Color("35e7ff"), 2)
+	if shield > 0.0:
+		_draw_shield_model()
+	_draw_pulse_animation()
+	_draw_shield_hit_animation()
 	var tint = Color.WHITE
 	if invulnerable > 0 and int(animation_time * 16) % 2 == 0:
 		tint.a = 0.45
@@ -384,3 +415,114 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 	if not pixel_character_enabled:
 		draw_circle(Vector2.ZERO, 2, Color("e6f7ff"))
+
+func _draw_shield_model() -> void:
+	var shield_ratio: float = clampf(shield / maxf(1.0, max_shield), 0.0, 1.0)
+	var active: bool = invulnerable > 0.0 or shield_hit_animation_time > 0.0
+	var pulse: float = 0.5 + 0.5 * sin(animation_time * (8.0 if active else 3.5))
+	var phase: float = animation_time * (0.72 if active else 0.38)
+	var radius: float = 24.0 + pulse * (1.5 if active else 0.8)
+	var alpha: float = (0.70 + pulse * 0.18) if active else (0.38 + pulse * 0.10)
+	alpha *= 0.52 + shield_ratio * 0.48
+	var cyan := Color("35e7ff")
+	var bright := Color("b8ffff")
+	var deep := Color("146d9b")
+	# A very light membrane gives the shield a body without hiding the player art.
+	draw_circle(Vector2.ZERO, radius - 1.0, Color(cyan, 0.025 * alpha))
+	# Six separated plates make this read as a shield device, instead of one
+	# generic circle. The plates rotate slowly and brighten while invulnerable.
+	for index in range(6):
+		var plate_start: float = phase + float(index) * TAU / 6.0 + 0.08
+		var plate_end: float = plate_start + TAU / 6.0 - 0.18
+		draw_arc(Vector2.ZERO, radius, plate_start, plate_end, 12,
+			Color(cyan, alpha), 2.4 if active else 1.8, true)
+		var node_angle: float = (plate_start + plate_end) * 0.5
+		var node_direction := Vector2.from_angle(node_angle)
+		draw_circle(node_direction * (radius + 0.5), 1.5 if active else 1.1,
+			Color(bright, alpha * 0.92))
+	# Faceted outer membrane and inner hex core provide a visible model even
+	# between damage events, while preserving the circular silhouette at game scale.
+	var shell := PackedVector2Array()
+	for index in range(8):
+		var angle: float = phase * 0.72 + float(index) * TAU / 8.0
+		var facet_radius: float = radius - 5.0 + (1.5 if index % 2 == 0 else -0.5)
+		shell.append(Vector2.from_angle(angle) * facet_radius)
+	# Close the polygon explicitly after constructing the eight facets.
+	if shell.size() > 0:
+		shell.append(shell[0])
+		draw_polyline(shell, Color(bright, alpha * 0.52), 1.0 if not active else 1.4, true)
+	var core := PackedVector2Array()
+	for index in range(6):
+		core.append(Vector2.from_angle(-phase * 1.1 + float(index) * TAU / 6.0) * 13.0)
+	if core.size() > 0:
+		core.append(core[0])
+		draw_polyline(core, Color(deep, alpha * 0.76), 1.0, true)
+	for index in range(6):
+		var spoke_direction := Vector2.from_angle(-phase * 1.1 + float(index) * TAU / 6.0)
+		draw_line(spoke_direction * 7.0, spoke_direction * (radius - 7.0),
+			Color(bright, alpha * (0.34 if index % 2 else 0.52)), 1.0, true)
+	# Small energy ticks pulse around the membrane and expose low shield charge.
+	for index in range(8):
+		var tick_angle: float = phase * 1.35 + float(index) * TAU / 8.0
+		var tick_direction := Vector2.from_angle(tick_angle)
+		var tick_length: float = 4.0 + pulse * 2.0
+		draw_line(tick_direction * (radius - 3.0), tick_direction * (radius - 3.0 - tick_length),
+			Color(cyan if index % 2 else bright, alpha * 0.72), 1.4, true)
+
+func _draw_pulse_animation() -> void:
+	if pulse_animation_time <= 0.0:
+		return
+	var progress: float = clampf(1.0 - pulse_animation_time / PULSE_ANIMATION_DURATION, 0.0, 1.0)
+	var eased: float = 1.0 - pow(1.0 - progress, 2.0)
+	var fade: float = 1.0 - progress * 0.68
+	var radius: float = lerpf(12.0, pulse_visual_radius, eased)
+	var wave_color := Color("9b4dff")
+	var accent := Color("e8c8ff")
+	for index in range(3):
+		var ring_progress: float = clampf(progress - float(index) * 0.10, 0.0, 1.0)
+		var ring_radius: float = lerpf(12.0, radius, ring_progress)
+		var ring_alpha: float = maxf(0.0, (0.72 - float(index) * 0.15) * fade)
+		draw_arc(Vector2.ZERO, ring_radius, -PI * 0.5 + animation_time * 1.8,
+			TAU - PI * 0.5 + animation_time * 1.8, 36, Color(wave_color, ring_alpha),
+			3.2 - float(index) * 0.7, true)
+	var aura_radius: float = 15.0 + progress * 11.0
+	draw_circle(Vector2.ZERO, aura_radius, Color(wave_color, 0.08 * fade))
+	for index in range(8):
+		var angle: float = animation_time * 2.4 + float(index) * TAU / 8.0
+		var direction := Vector2.from_angle(angle)
+		var start: Vector2 = direction * (aura_radius + 4.0)
+		var finish: Vector2 = direction * (radius + 8.0)
+		draw_line(start, finish, Color(accent, 0.55 * fade), 1.5, true)
+		draw_circle(finish, 2.0 + progress * 1.5, Color(accent, 0.82 * fade))
+
+func _draw_shield_hit_animation() -> void:
+	if shield_hit_animation_time <= 0.0:
+		return
+	var progress: float = clampf(1.0 - shield_hit_animation_time / SHIELD_HIT_ANIMATION_DURATION, 0.0, 1.0)
+	var impact_fade: float = 1.0 - minf(1.0, progress * 1.45)
+	var ring_fade: float = 1.0 - progress * 0.72
+	var ring_color := Color("ff846f") if shield_hit_broken else Color("35e7ff")
+	var impact_color := Color("ff4d6e")
+	var accent := Color("fff1b0")
+	var eased: float = 1.0 - pow(1.0 - progress, 2.0)
+	var radius: float = lerpf(22.0, 34.0, eased)
+	var rotation: float = shield_hit_angle + animation_time * 2.2
+	draw_circle(Vector2.ZERO, radius, Color(ring_color, 0.055 * ring_fade))
+	draw_arc(Vector2.ZERO, radius, rotation, rotation + TAU * 0.90, 40, Color(ring_color, 0.92 * ring_fade), 2.8, true)
+	draw_arc(Vector2.ZERO, radius - 5.0, rotation + PI * 0.18,
+		rotation + PI * 1.28, 24, Color("b8ffff", 0.70 * ring_fade), 1.3, true)
+	var impact_direction := Vector2.from_angle(shield_hit_angle)
+	var impact_center: Vector2 = impact_direction * (14.0 + progress * 4.0)
+	draw_circle(impact_center, 6.0 + impact_fade * 5.0, Color(impact_color, 0.12 * impact_fade))
+	draw_arc(impact_center, 7.0 + impact_fade * 4.0, rotation, rotation + TAU * 0.82,
+		20, Color(impact_color, 0.9 * impact_fade), 2.0, true)
+	for index in range(8):
+		var fragment_angle: float = shield_hit_angle + (float(index) - 3.5) * 0.27 + progress * 0.75
+		var fragment_direction := Vector2.from_angle(fragment_angle)
+		var start: Vector2 = impact_center + fragment_direction * (5.0 + progress * 2.0)
+		var finish: Vector2 = impact_center + fragment_direction * (13.0 + impact_fade * 13.0)
+		draw_line(start, finish, Color(accent if index % 3 == 0 else impact_color, 0.86 * impact_fade), 1.8, true)
+		draw_circle(finish, 1.5 + impact_fade * 1.8, Color(accent, 0.9 * impact_fade))
+	var normal := impact_direction.orthogonal()
+	draw_line(impact_center - normal * (4.0 + impact_fade * 4.0),
+		impact_center + normal * (4.0 + impact_fade * 4.0), Color(accent, 0.86 * impact_fade), 1.6, true)

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Clean runner mark designed for a 68 px circular touch button. -->
+  <g fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="72" cy="23" r="9"/>
+    <path d="M65 40 C60 47 57 55 53 63 L70 69"/>
+    <path d="M62 43 L44 48 L30 65"/>
+    <path d="M81 45 L98 56 L115 49"/>
+    <path d="M70 69 L52 91 L32 109"/>
+    <path d="M70 69 L91 82 L80 103 L89 112"/>
+    <path d="M8 56 H32"/>
+    <path d="M7 73 H26"/>
+    <path d="M15 90 H38"/>
+  </g>
+</svg>

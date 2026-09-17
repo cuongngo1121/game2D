@@ -35,10 +35,11 @@ func _run() -> void:
 	var boundary_toggle_key := InputEventKey.new()
 	boundary_toggle_key.physical_keycode = KEY_Y
 	boundary_toggle_key.pressed = true
+	_check(not game.show_route_boundaries and not game.show_collision_boundaries, "Gameplay starts with route and collision boundary overlays hidden")
 	game._unhandled_input(boundary_toggle_key)
-	_check(not game.show_route_boundaries and not game.show_collision_boundaries, "Y hides the cyan/purple route frame drawn over the map without enabling collision data")
+	_check(game.show_route_boundaries and not game.show_collision_boundaries, "Y shows the cyan/purple route frame without enabling collision data")
 	game._unhandled_input(boundary_toggle_key)
-	_check(game.show_route_boundaries and not game.show_collision_boundaries, "Y restores the cyan/purple route frame without changing collision data")
+	_check(not game.show_route_boundaries and not game.show_collision_boundaries, "Y hides the cyan/purple route frame again without changing collision data")
 	_check(game.debug_session and game.is_debug_map_tour() and game.tutorial_step == 4 and game.player.visible and not game.graph.is_empty(), "Debug zone starts an isolated map tour that skips onboarding and rebuilds player/map state")
 	_check(not game.combat_active and game.enemies.living_count() == 0, "Debug map tour starts without combat or spawned enemies")
 	var barrier_preview_key := InputEventKey.new()

@@ -37,6 +37,42 @@ Chép APK sang điện thoại rồi mở để cài, hoặc dùng ADB:
 
 Chỉ chạy lệnh cài khi đúng thiết bị của bạn đã hiện trong danh sách ADB. APK debug này phục vụ cài thử trực tiếp; chưa phải bản đã phát hành lên Google Play. Dự án không dùng tài khoản, Internet, quảng cáo hay giao dịch trong ứng dụng.
 
+## Bố cục UI mặc định khi cài thiết bị mới
+
+`data/ui_layout_defaults.json` là snapshot chỉ chứa bố cục UI hiện tại của PC:
+Settings, gameplay HUD, nút cảm ứng, màn hình tạm dừng, màn hình nâng cấp, Armory, kích thước touch
+và độ mờ touch.
+Khi thiết bị chưa có `user://profile.json`, game dùng snapshot này làm bố cục ban
+đầu. Profile đã tồn tại trên thiết bị vẫn được ưu tiên để không làm mất bố cục
+người chơi đã tự chỉnh.
+
+Không chép toàn bộ `profile.json` từ PC sang Android: file đó còn chứa checkpoint,
+tiến trình, vũ khí và nâng cấp. Mỗi lần chạy export Android, công cụ sẽ tự đọc
+profile PC portable hiện tại, chỉ trích xuất các nhóm layout được cho phép, kiểm tra
+đủ mục/tọa độ/tỉ lệ rồi cập nhật snapshot trước khi tạo APK. Nếu profile PC thiếu hoặc
+hỏng, export dừng và không tạo APK mới từ snapshot không rõ nguồn. Có thể chỉ định
+profile khác bằng `-UiProfilePath <đường-dẫn-profile.json>`.
+
+Trong bản debug PC, ở gameplay nhấn **F8** để bật chế độ căn HUD. Chế độ này bao
+gồm cả nút `TẠM DỪNG`: kéo khung để di chuyển, kéo cạnh/góc để đổi cỡ, rồi nhấn
+**F8** lần nữa để lưu bố cục HUD vào profile hiện tại. Nút tạm dừng dùng màu cyan
+giống thanh khiên để dễ nhận biết trên HUD.
+
+Khi mở màn hình `TẠM DỪNG`, nhấn **F10** để căn tiêu đề `TẠM DỪNG` và ba khung
+`TIẾP TỤC`, `CÀI ĐẶT`, `MENU`. Kéo tiêu đề để đổi vị trí, kéo cạnh/góc để đổi cỡ
+chữ; chữ và vùng chạm của các nút cũng di chuyển/đổi cỡ theo khung tương ứng.
+Nhấn **R** để khôi phục khung gốc. Đây là các công cụ phát triển trên PC, không
+xuất hiện trong bản release Android.
+
+Sau khi dọn xong một phòng, màn hình nâng cấp có ba card module và một lựa chọn
+`SỬA CHỮA +25 HP`. Trong bản debug PC, nhấn **F11** tại màn hình này để kéo/đổi
+cỡ tiêu đề, từng card, tên nâng cấp, mô tả từng card và vùng sửa chữa; nhấn **F11** lần nữa để lưu vào
+profile hiện tại. Nhấn **R** trong chế độ chỉnh để khôi phục bố cục gốc. Các nút
+phần thưởng chỉ hiển thị chữ trên artwork, còn vùng chạm vẫn là control thật.
+Bạn cũng có thể nhấn **F11** ngay trong gameplay để mở bản xem trước màn hình
+nâng cấp; bản xem trước tạm dừng trận, không dọn phòng, không cộng thưởng và
+không ghi checkpoint. Nhấn **F11** lần nữa để lưu bố cục và quay lại trận đang chơi.
+
 ## Vòng lặp debug trên Android
 
 Bạn có thể vừa đặt breakpoint trên PC vừa kiểm tra cùng bản build trên điện thoại. Mở một cửa sổ PowerShell để chạy Godot editor:

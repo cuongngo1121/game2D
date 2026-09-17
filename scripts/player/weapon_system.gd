@@ -5,7 +5,10 @@ var game
 var cooldown: float = 0
 var orbit_time: float = 0
 var orbit_tick: float = 0
+var orbit_phase: float = 0
 var beam_lines: Array = []
+var slash_effects: Array = []
+var muzzle_effects: Array = []
 var sequence: Array = []
 var sequence_timer: float = 0
 var shot_index: int = 0
@@ -22,14 +25,25 @@ func definition(id: String) -> Dictionary:
 func reset() -> void:
 	cooldown = 0
 	orbit_time = 0
+	orbit_phase = 0
 	beam_lines.clear()
+	slash_effects.clear()
+	muzzle_effects.clear()
 	sequence.clear()
 
 func update(delta: float) -> void:
 	cooldown = maxf(0, cooldown - delta)
 	for line in beam_lines:
 		line.time -= delta
+		line.age = float(line.get("age", 0.0)) + delta
 	beam_lines = beam_lines.filter(func(line): return line.time > 0)
+	for slash in slash_effects:
+		slash.time += delta
+	slash_effects = slash_effects.filter(func(slash): return slash.time < slash.duration)
+	for muzzle in muzzle_effects:
+		muzzle.time += delta
+		muzzle.duration = float(muzzle.get("duration", 0.13))
+	muzzle_effects = muzzle_effects.filter(func(muzzle): return muzzle.time < muzzle.duration)
 	if not sequence.is_empty():
 		sequence_timer -= delta
 		if sequence_timer <= 0:
@@ -68,6 +82,12 @@ func fire() -> bool:
 	game.player.play_weapon_fire_animation()
 	game.audio.play_sfx("weapon_" + str(weapon.id))
 	var direction: Vector2 = game.player.aim_direction
+	var visual: String = str(weapon.get("visual", weapon.id))
+	var primary: Color = _visual_color(weapon, "visual_color", "67b9d4")
+	var accent: Color = _visual_color(weapon, "visual_accent", "e6f7ff")
+	muzzle_effects.append({"pos": game.player.weapon_muzzle_position(), "direction": direction,
+		"visual": visual, "time": 0.0, "duration": 0.13, "color": primary,
+		"accent": accent, "phase": game.elapsed * 3.0 + shot_index * 0.7})
 	var piercing: int = int(game.upgrades.get("pierce", 0))
 	var bounce: int = int(game.upgrades.get("bounce", 0))
 	match str(weapon.id):
@@ -83,7 +103,9 @@ func fire() -> bool:
 			var start: Vector2 = game.player.weapon_beam_origin()
 			var finish: Vector2 = start + direction * float(weapon.range)
 			finish = clipped_line(start, finish)
-			beam_lines.append({"from": start, "to": finish, "time": 0.12, "color": Color("35e7ff")})
+			beam_lines.append({"from": start, "to": finish, "time": 0.16, "duration": 0.16,
+				"age": 0.0, "color": primary, "accent": accent, "style": visual,
+				"phase": game.elapsed * 4.0 + shot_index * 0.41})
 			for enemy in game.enemies.units.duplicate():
 				if Geometry2D.get_closest_point_to_segment(enemy.pos, start, finish).distance_to(enemy.pos) < float(enemy.radius) + 5:
 					game.enemies.damage_enemy(enemy.id, weapon.damage)
@@ -97,7 +119,9 @@ func fire() -> bool:
 				if target.is_empty():
 					break
 				hit.append(target.id)
-				beam_lines.append({"from": previous, "to": target.pos, "time": 0.20, "color": Color("9b4dff")})
+				beam_lines.append({"from": previous, "to": target.pos, "time": 0.23, "duration": 0.23,
+					"age": 0.0, "color": primary, "accent": accent, "style": visual,
+					"phase": game.elapsed * 7.0 + i * 1.9 + shot_index * 0.37})
 				game.enemies.damage_enemy(target.id, float(weapon.damage) * pow(0.83, i))
 				previous = target.pos
 				target = {}
@@ -114,9 +138,12 @@ func fire() -> bool:
 		"orbit":
 			orbit_time = 4.0
 			orbit_tick = 0
+			orbit_phase = game.elapsed * 4.5 + shot_index * 0.25
 		"blade":
 			var center: Vector2 = game.player.position + direction * 38
-			game.add_fx(center, Color("35e7ff"), 53)
+			slash_effects.append({"center": center, "direction": direction, "time": 0.0,
+				"duration": 0.24, "radius": 82.0, "color": primary, "accent": accent,
+				"phase": game.elapsed * 6.0 + shot_index * 0.6})
 			game.projectiles.erase_in_radius(center, 58)
 			for enemy in game.enemies.units.duplicate():
 				if enemy.pos.distance_to(center) < 64 + enemy.radius and game.has_line_of_sight(game.player.position, enemy.pos):
@@ -130,10 +157,18 @@ func fire() -> bool:
 
 func bullet(weapon: Dictionary, direction: Vector2, behavior: String, pierce: int, bounces: int, speed_factor: float = 1.0, bullet_radius: float = 4.0) -> void:
 	var speed: float = float(weapon.speed) * speed_factor
+	var visual: String = str(weapon.get("visual", behavior))
+	var primary: Color = _visual_color(weapon, "visual_color", "67b9d4")
+	var accent: Color = _visual_color(weapon, "visual_accent", "e6f7ff")
 	game.projectiles.spawn({"pos": game.player.weapon_projectile_spawn_position(), "vel": direction * speed,
 		"damage": float(weapon.damage), "enemy": false, "radius": bullet_radius,
-		"life": float(weapon.range) / maxf(speed, 1.0), "color": Color("67b9d4"),
+		"life": float(weapon.range) / maxf(speed, 1.0), "color": primary, "accent": accent,
+		"trail_color": Color(primary, 0.52), "visual": visual, "weapon_id": str(weapon.id),
+		"phase": game.elapsed * 5.0 + shot_index * 0.37,
 		"pierce": pierce, "bounces": bounces, "behavior": behavior, "clearable": true})
+
+func _visual_color(weapon: Dictionary, key: String, fallback: String) -> Color:
+	return Color(str(weapon.get(key, fallback)))
 
 func clipped_line(from: Vector2, to: Vector2) -> Vector2:
 	var result = to

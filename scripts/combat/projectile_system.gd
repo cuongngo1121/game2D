@@ -19,11 +19,17 @@ func spawn(spec: Dictionary) -> void:
 	shot.clear()
 	shot.merge({"pos": Vector2.ZERO, "vel": Vector2.ZERO, "damage": 10.0,
 		"enemy": false, "radius": 4.0, "life": 3.0, "color": Color("35e7ff"),
+		"accent": Color("e6f7ff"), "trail_color": Color("35e7ff", 0.45),
+		"visual": "enemy_orb", "weapon_id": "",
 		"pierce": 0, "bounces": 0, "behavior": "normal", "clearable": true,
 		"age": 0.0, "hit_ids": {}, "returning": false, "armed": false,
-		"fuse": 0.45, "explosion_radius": 68.0, "phase": 0.0})
+		"fuse": 0.45, "explosion_radius": 68.0, "phase": 0.0,
+		"trail": [], "trail_max": 8})
 	shot.merge(spec, true)
 	shot["base_vel"] = shot.vel
+	shot["previous_pos"] = shot.pos
+	shot["trail"] = [shot.pos]
+	shot["phase"] = float(shot.get("phase", 0.0))
 	# Each projectile owns its hit ledger, including when callers reuse a spec.
 	shot["hit_ids"] = {}
 	active.append(shot)
@@ -81,9 +87,12 @@ func update(delta: float) -> void:
 			shot.vel = basis + basis.orthogonal().normalized() * sin(shot.age * 13.0 + shot.phase) * 95.0
 		elif shot.behavior == "split" and shot.age >= float(shot.get("split_after", 0.65)):
 			var base: Vector2 = shot.vel
-			for angle in [-0.36, 0.36]:
+			for child_index in range(2):
+				var angle: float = -0.36 if child_index == 0 else 0.36
 				spawn({"pos": shot.pos, "vel": base.rotated(angle), "enemy": true,
-					"damage": shot.damage, "color": shot.color, "life": shot.life, "radius": 4.5})
+					"damage": shot.damage, "color": shot.color, "accent": shot.accent,
+					"trail_color": shot.get("trail_color", shot.color), "visual": "enemy_shard",
+					"life": shot.life, "radius": 4.5, "phase": shot.phase + angle})
 			_recycle(i)
 			continue
 		var retired: bool = _advance(shot, delta)
@@ -91,9 +100,21 @@ func update(delta: float) -> void:
 		if update_epoch != _epoch:
 			queue_redraw()
 			return
+		if not retired:
+			_record_trail(shot)
 		if retired:
 			_recycle(i)
 	queue_redraw()
+
+func _record_trail(shot: Dictionary) -> void:
+	var trail: Array = shot.get("trail", [])
+	var last: Vector2 = trail.back() if not trail.is_empty() else shot.pos
+	if last.distance_squared_to(shot.pos) >= 9.0:
+		trail.append(shot.pos)
+	var trail_max: int = maxi(3, int(shot.get("trail_max", 8)))
+	while trail.size() > trail_max:
+		trail.pop_front()
+	shot["trail"] = trail
 
 func _advance(shot: Dictionary, delta: float) -> bool:
 	var advance_epoch: int = _epoch
@@ -159,7 +180,7 @@ func _arm(shot: Dictionary) -> void:
 	shot.armed = true
 	shot.vel = Vector2.ZERO
 	shot.life = 2.0
-	game.add_fx(shot.pos, Color("9b4dff"), 13.0)
+	game.add_fx(shot.pos, shot.color, 18.0)
 
 func _explode(shot: Dictionary) -> void:
 	game.add_fx(shot.pos, shot.color, shot.explosion_radius)
@@ -243,26 +264,262 @@ static func _segment_circle(a: Vector2, b: Vector2, center: Vector2, radius: flo
 func _draw() -> void:
 	for shot in active:
 		var p: Vector2 = shot.pos
-		var radius: float = shot.radius
+		var radius: float = float(shot.radius)
 		var color: Color = shot.color
+		var accent: Color = shot.get("accent", Color("e6f7ff"))
 		if shot.armed:
-			var progress: float = clampf(1.0 - shot.fuse / 0.45, 0.0, 1.0)
-			draw_circle(p, shot.explosion_radius, Color(color, 0.09))
-			draw_arc(p, shot.explosion_radius * progress, 0.0, TAU, 24, Color(color, 0.75), 2.0)
-			draw_rect(Rect2(p - Vector2(6, 6), Vector2(12, 12)), color, false, 2.0)
+			_draw_armed(shot, color, accent)
 			continue
 		if shot.enemy:
-			draw_circle(p, radius + 2.2, Color("271024"))
-			draw_circle(p, radius + 0.8, color)
-			draw_circle(p, maxf(1.5, radius * 0.46), Color("fff3ed"))
-			if not shot.clearable:
-				draw_rect(Rect2(p - Vector2.ONE * (radius + 3.0), Vector2.ONE * (radius + 3.0) * 2.0), Color.WHITE, false, 1.0)
-		elif shot.behavior == "disc":
-			draw_arc(p, radius + 2.0, shot.age * 14.0, shot.age * 14.0 + TAU * 0.8, 12, color, 3.0)
-		elif shot.behavior == "wave":
-			var angle: float = shot.vel.angle()
-			draw_arc(p, radius, angle - 1.1, angle + 1.1, 10, color, 5.0)
-		elif shot.behavior == "glitch":
-			draw_rect(Rect2(p - Vector2(6, 6), Vector2(12, 12)), color)
-		else:
-			draw_line(p - shot.vel.normalized() * 7.0, p + shot.vel.normalized() * 3.0, color, radius * 1.45)
+			_draw_enemy_shot(shot, p, radius, color, accent)
+			continue
+		var visual: String = str(shot.get("visual", shot.behavior))
+		match visual:
+			"pulse_orb":
+				_draw_pulse_orb(shot, p, radius, color, accent)
+			"needle_burst":
+				_draw_needle_burst(shot, p, radius, color, accent)
+			"pellet_shard":
+				_draw_pellet_shard(shot, p, radius, color, accent)
+			"rail_spear":
+				_draw_rail_spear(shot, p, radius, color, accent)
+			"echo_disc":
+				_draw_echo_disc(shot, p, radius, color, accent)
+			"sonic_wave":
+				_draw_sonic_wave(shot, p, radius, color, accent)
+			"glitch_charge":
+				_draw_glitch_charge(shot, p, radius, color, accent)
+			"chord_note":
+				_draw_chord_note(shot, p, radius, color, accent)
+			_:
+				_draw_generic_shot(shot, p, radius, color, accent)
+
+func _draw_trail(shot: Dictionary, color: Color, width: float = 3.0, alpha: float = 0.32) -> void:
+	var trail: Array = shot.get("trail", [])
+	if trail.size() < 2:
+		return
+	var last_index: int = trail.size() - 1
+	for index in range(1, trail.size()):
+		var from: Vector2 = trail[index - 1]
+		var to: Vector2 = trail[index]
+		var strength: float = float(index) / float(last_index)
+		draw_line(from, to, Color(color, alpha * strength), maxf(1.0, width * strength), true)
+
+func _shot_direction(shot: Dictionary) -> Vector2:
+	var velocity: Vector2 = shot.vel
+	return velocity.normalized() if velocity.length_squared() > 0.0001 else Vector2.RIGHT
+
+func _draw_enemy_shot(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	var visual: String = str(shot.get("visual", "enemy_orb"))
+	match visual:
+		"enemy_bomb":
+			_draw_enemy_bomb(shot, p, radius, color, accent, direction)
+		"enemy_shard":
+			_draw_enemy_shard(shot, p, radius, color, accent, direction)
+		"enemy_ring":
+			_draw_enemy_ring(shot, p, radius, color, accent, direction)
+		"enemy_spiral":
+			_draw_enemy_spiral(shot, p, radius, color, accent, direction)
+		"enemy_laser":
+			_draw_enemy_laser(shot, p, radius, color, accent, direction)
+		_:
+			_draw_enemy_orb(shot, p, radius, color, accent, direction)
+
+func _enemy_trail_color(shot: Dictionary, fallback: Color) -> Color:
+	var trail_color: Color = shot.get("trail_color", fallback)
+	return trail_color
+
+func _draw_enemy_orb(shot: Dictionary, p: Vector2, radius: float, color: Color,
+		accent: Color, direction: Vector2) -> void:
+	var trail_color := _enemy_trail_color(shot, color)
+	_draw_trail(shot, trail_color, 3.5, 0.28)
+	var pulse: float = 0.75 + 0.25 * sin(float(shot.age) * 18.0 + float(shot.phase))
+	draw_circle(p, radius + 4.0 * pulse, Color(color, 0.12))
+	draw_circle(p, radius + 1.2, Color("271024"))
+	draw_circle(p, radius, color)
+	draw_circle(p, maxf(1.5, radius * 0.46), accent)
+	draw_arc(p, radius + 4.0, direction.angle() - 0.85, direction.angle() + 0.85, 12, Color(accent, 0.76), 1.5, true)
+	var normal: Vector2 = direction.orthogonal()
+	draw_line(p - normal * (radius + 2.0), p + normal * (radius + 2.0), Color(accent, 0.55), 1.0, true)
+	if not shot.clearable:
+		draw_line(p - direction * (radius + 3.0), p + direction * (radius + 3.0), Color.WHITE, 1.0, true)
+
+func _draw_enemy_bomb(shot: Dictionary, p: Vector2, radius: float, color: Color,
+		accent: Color, direction: Vector2) -> void:
+	var trail_color := _enemy_trail_color(shot, color)
+	_draw_trail(shot, trail_color, 5.5, 0.30)
+	var split_after: float = maxf(0.05, float(shot.get("split_after", 0.65)))
+	var countdown: float = clampf(1.0 - float(shot.age) / split_after, 0.0, 1.0)
+	var spin: float = float(shot.phase) + float(shot.age) * 10.0
+	var shell_radius: float = radius + 2.5 + sin(float(shot.age) * 20.0) * 1.2
+	draw_circle(p, shell_radius + 5.0, Color(color, 0.11 + (1.0 - countdown) * 0.10))
+	draw_circle(p, shell_radius + 1.0, Color("2b1830"))
+	draw_circle(p, shell_radius, color)
+	draw_circle(p, shell_radius * 0.42, accent)
+	draw_arc(p, shell_radius + 5.0, spin, spin + TAU * (0.45 + countdown * 0.45), 18, accent, 1.8, true)
+	for index in range(4):
+		var angle: float = spin + float(index) * TAU / 4.0
+		var ray := Vector2.from_angle(angle)
+		draw_line(p + ray * (shell_radius + 3.0), p + ray * (shell_radius + 8.0), Color(accent, 0.78), 1.4, true)
+	var normal: Vector2 = direction.orthogonal()
+	draw_line(p - direction * 3.0 - normal * 3.0, p + direction * 3.0 + normal * 3.0, Color(accent, 0.88), 1.2, true)
+
+func _draw_enemy_shard(shot: Dictionary, p: Vector2, radius: float, color: Color,
+		accent: Color, direction: Vector2) -> void:
+	_draw_trail(shot, _enemy_trail_color(shot, color), 3.0, 0.24)
+	var normal: Vector2 = direction.orthogonal()
+	var points := PackedVector2Array([
+		p + direction * 7.0,
+		p + normal * (radius + 1.0),
+		p - direction * 5.0,
+		p - normal * (radius + 1.0),
+	])
+	draw_colored_polygon(points, color)
+	draw_polyline(PackedVector2Array([points[0], points[1], points[2], points[3], points[0]]), Color("2b1830"), 1.2, true)
+	draw_line(p - direction * 1.0, p + direction * 5.0, accent, 1.2, true)
+
+func _draw_enemy_ring(shot: Dictionary, p: Vector2, radius: float, color: Color,
+		accent: Color, direction: Vector2) -> void:
+	_draw_trail(shot, _enemy_trail_color(shot, color), 3.0, 0.22)
+	var spin: float = float(shot.age) * 11.0 + float(shot.phase)
+	draw_circle(p, radius + 3.0, Color(color, 0.10))
+	draw_arc(p, radius + 2.5, spin, spin + PI * 1.35, 16, color, 2.6, true)
+	draw_arc(p, radius - 1.0, spin + PI, spin + PI * 1.65, 14, accent, 1.3, true)
+	draw_circle(p, maxf(1.3, radius * 0.28), accent)
+
+func _draw_enemy_spiral(shot: Dictionary, p: Vector2, radius: float, color: Color,
+		accent: Color, direction: Vector2) -> void:
+	_draw_trail(shot, _enemy_trail_color(shot, color), 4.0, 0.25)
+	var phase: float = float(shot.age) * 12.0 + float(shot.phase)
+	for index in range(3):
+		var ring_radius: float = radius + 2.0 + float(index) * 2.0
+		draw_arc(p, ring_radius, phase + float(index) * 0.9, phase + float(index) * 0.9 + PI * 0.72, 12, Color(color, 0.78 - float(index) * 0.16), 1.4, true)
+	draw_circle(p, maxf(1.5, radius * 0.34), accent)
+
+func _draw_enemy_laser(shot: Dictionary, p: Vector2, radius: float, color: Color,
+		accent: Color, direction: Vector2) -> void:
+	_draw_trail(shot, _enemy_trail_color(shot, color), 5.0, 0.28)
+	draw_line(p - direction * 11.0, p + direction * 8.0, Color(color, 0.25), radius * 1.8, true)
+	draw_line(p - direction * 9.0, p + direction * 8.0, color, 2.8, true)
+	draw_line(p - direction * 5.0, p + direction * 5.0, accent, 1.1, true)
+
+func _draw_armed(shot: Dictionary, color: Color, accent: Color) -> void:
+	var p: Vector2 = shot.pos
+	var progress: float = clampf(1.0 - float(shot.fuse) / 2.0, 0.0, 1.0)
+	var pulse: float = 0.5 + 0.5 * sin(float(shot.age) * 24.0 + float(shot.phase))
+	var radius: float = float(shot.explosion_radius)
+	draw_circle(p, radius * (0.20 + progress * 0.16), Color(color, 0.10 + pulse * 0.06))
+	draw_arc(p, radius * (0.34 + progress * 0.66), -PI * 0.5, TAU - PI * 0.5, 32, Color(color, 0.78), 2.0, true)
+	draw_arc(p, radius * (0.22 + pulse * 0.08), 0.0, TAU, 16, Color(accent, 0.88), 1.5, true)
+	for index in range(6):
+		var angle: float = float(index) * TAU / 6.0 + float(shot.phase) * 0.2
+		var start: Vector2 = p + Vector2.from_angle(angle) * (10.0 + progress * 5.0)
+		var finish: Vector2 = p + Vector2.from_angle(angle) * (18.0 + progress * 20.0)
+		draw_line(start, finish, Color(color, 0.55), 1.5, true)
+	_draw_glitch_shape(p, 8.0 + pulse * 2.0, color, accent, float(shot.phase) + shot.age * 6.0)
+
+func _draw_pulse_orb(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	_draw_trail(shot, color, 7.0, 0.26)
+	var pulse: float = 0.88 + 0.12 * sin(float(shot.age) * 18.0 + float(shot.phase))
+	draw_circle(p, radius + 4.0 * pulse, Color(color, 0.12))
+	draw_circle(p, radius + 1.2, Color("071827"))
+	draw_circle(p, radius, color)
+	draw_circle(p, maxf(1.8, radius * 0.48), accent)
+	draw_arc(p, radius + 3.0, float(shot.age) * 8.0, float(shot.age) * 8.0 + PI * 1.25, 12, Color(accent, 0.8), 1.2, true)
+
+func _draw_needle_burst(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	var normal: Vector2 = direction.orthogonal()
+	_draw_trail(shot, color, 4.5, 0.28)
+	draw_line(p - direction * 10.0, p + direction * 5.0, Color(color, 0.55), radius + 2.0, true)
+	draw_line(p - direction * 7.0, p + direction * 7.0, accent, 1.5, true)
+	draw_line(p - normal * 2.0, p + normal * 2.0, accent, 1.0, true)
+
+func _draw_pellet_shard(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	var normal: Vector2 = direction.orthogonal()
+	_draw_trail(shot, color, 4.0, 0.22)
+	var points := PackedVector2Array([
+		p + direction * 6.0,
+		p + normal * (radius + 1.0),
+		p - direction * 4.0,
+		p - normal * (radius + 1.0),
+	])
+	draw_colored_polygon(points, color)
+	draw_polyline(PackedVector2Array([points[0], points[1], points[2], points[3], points[0]]), Color("2b1830"), 1.5, true)
+	draw_line(p - direction * 1.0, p + direction * 4.0, accent, 1.1, true)
+
+func _draw_rail_spear(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	var normal: Vector2 = direction.orthogonal()
+	_draw_trail(shot, color, 9.0, 0.24)
+	draw_line(p - direction * 17.0, p + direction * 9.0, Color(color, 0.32), 7.0, true)
+	draw_line(p - direction * 15.0, p + direction * 8.0, color, 3.0, true)
+	draw_line(p - direction * 11.0 + normal * 2.8, p + direction * 5.0 + normal * 2.8, accent, 1.0, true)
+	draw_line(p - direction * 11.0 - normal * 2.8, p + direction * 5.0 - normal * 2.8, accent, 1.0, true)
+	draw_colored_polygon(PackedVector2Array([
+		p + direction * 10.0,
+		p + normal * 2.8,
+		p - direction * 4.0,
+		p - normal * 2.8,
+	]), accent)
+
+func _draw_echo_disc(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	_draw_trail(shot, color, 6.0, 0.24)
+	var spin: float = float(shot.age) * 15.0 + float(shot.phase)
+	draw_circle(p, radius + 4.0, Color(color, 0.10))
+	draw_arc(p, radius + 3.0, spin, spin + TAU * 0.74, 18, color, 3.0, true)
+	draw_arc(p, radius - 1.0, spin + PI, spin + PI + TAU * 0.54, 16, accent, 2.0, true)
+	draw_circle(p, maxf(1.5, radius * 0.24), Color("180e2a"))
+	for index in range(4):
+		var angle: float = spin + float(index) * TAU / 4.0
+		draw_line(p + Vector2.from_angle(angle) * (radius * 0.35), p + Vector2.from_angle(angle) * (radius + 1.5), Color(accent, 0.78), 1.0, true)
+
+func _draw_sonic_wave(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	_draw_trail(shot, color, 10.0, 0.20)
+	var angle: float = direction.angle()
+	var pulse: float = 0.5 + 0.5 * sin(float(shot.age) * 12.0 + float(shot.phase))
+	for index in range(3):
+		var offset: Vector2 = -direction * float(index) * 5.0
+		var arc_radius: float = radius * (0.55 + float(index) * 0.18) + pulse * 2.0
+		draw_arc(p + offset, arc_radius, angle - 1.08, angle + 1.08, 14, Color(color, 0.72 - float(index) * 0.16), 4.0 - float(index) * 0.7, true)
+	draw_circle(p + direction * 3.0, 3.0, accent)
+
+func _draw_glitch_charge(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	_draw_trail(shot, color, 6.0, 0.25)
+	var jitter: float = sin(float(shot.age) * 31.0 + float(shot.phase)) * 2.0
+	_draw_glitch_shape(p + Vector2(jitter, 0), radius + 3.0, color, accent, float(shot.phase) + shot.age * 8.0)
+	for index in range(3):
+		var y: float = p.y - 5.0 + float(index) * 5.0
+		draw_line(Vector2(p.x - 7.0 + jitter, y), Vector2(p.x + 7.0 - jitter, y), Color(accent, 0.58), 1.0, true)
+
+func _draw_glitch_shape(center: Vector2, radius: float, color: Color, accent: Color, phase: float) -> void:
+	var points := PackedVector2Array()
+	for index in range(8):
+		var angle: float = float(index) * TAU / 8.0 + phase * 0.11
+		var wobble: float = 1.0 + 0.12 * sin(phase * 2.0 + float(index) * 2.3)
+		points.append(center + Vector2.from_angle(angle) * radius * wobble)
+	draw_colored_polygon(points, Color(color, 0.86))
+	var outline := PackedVector2Array(points)
+	outline.append(points[0])
+	draw_polyline(outline, Color(accent, 0.9), 1.4, true)
+	draw_circle(center, radius * 0.28, accent)
+
+func _draw_chord_note(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	_draw_trail(shot, color, 4.5, 0.24)
+	var phase: float = float(shot.age) * 13.0 + float(shot.phase)
+	var wobble: Vector2 = direction.orthogonal() * sin(phase) * 2.0
+	draw_circle(p + wobble, radius + 3.0, Color(color, 0.12))
+	draw_circle(p + wobble, radius, color)
+	draw_circle(p + wobble, maxf(1.5, radius * 0.42), accent)
+	draw_arc(p + wobble, radius + 4.0, phase, phase + PI * 1.3, 12, Color(accent, 0.8), 1.2, true)
+	draw_line(p + direction * 1.0 + wobble, p + direction * 1.0 + wobble - direction.orthogonal() * 8.0, accent, 1.2, true)
+
+func _draw_generic_shot(shot: Dictionary, p: Vector2, radius: float, color: Color, accent: Color) -> void:
+	var direction: Vector2 = _shot_direction(shot)
+	_draw_trail(shot, color, radius * 1.5, 0.22)
+	draw_line(p - direction * 8.0, p + direction * 4.0, color, radius * 1.45, true)
+	draw_circle(p, maxf(1.0, radius * 0.35), accent)

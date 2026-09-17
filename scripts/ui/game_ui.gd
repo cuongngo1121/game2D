@@ -5,6 +5,7 @@ var game
 var root: Control
 var overlay: Control
 var hud: Control
+var hud_art: TextureRect
 var font: Font
 var bold: Font
 var title_label: Label
@@ -12,6 +13,10 @@ var room_label: Label
 var health_label: Label
 var weapon_label: Label
 var secondary_weapon_label: Label
+var current_weapon_preview: TextureRect
+var secondary_weapon_preview: TextureRect
+var current_weapon_box: Panel
+var current_weapon_button: Button
 var status_label: Label
 var hint_label: Label
 var boss_label: Label
@@ -19,11 +24,39 @@ var bars: Dictionary = {}
 var beat_display: Control
 var minimap: Control
 var map_button: Button
+var menu_button: Button
+var pause_button: Button
 var sound_toggle_button: Button
 var music_toggle_button: Button
 var demo_controls: Array[Control] = []
+var hud_layout_editor
+var hud_layout_groups: Dictionary = {}
+var hud_layout_positions: Dictionary = {}
+var hud_layout_scales: Dictionary = {}
+var armory_layout_editor
+var armory_layout_controls: Dictionary = {}
+var armory_layout_positions: Dictionary = {}
+var armory_layout_scales: Dictionary = {}
+var pause_layout_editor
+var pause_layout_groups: Dictionary = {}
+var pause_layout_positions: Dictionary = {}
+var pause_layout_scales: Dictionary = {}
+var reward_layout_editor
+var reward_layout_groups: Dictionary = {}
+var reward_layout_positions: Dictionary = {}
+var reward_layout_scales: Dictionary = {}
+var reward_layout_preview_active: bool = false
+var reward_preview_restore_state: String = ""
+var support_layout_editor
+var support_layout_groups: Dictionary = {}
+var support_layout_positions: Dictionary = {}
+var support_layout_scales: Dictionary = {}
+var hud_title_default_position := Vector2.ZERO
+var hud_title_anchor := Vector2.ZERO
+var hud_title_anchor_valid: bool = false
 var _last_sfx_enabled: bool = true
 var _last_music_enabled: bool = true
+var _last_hud_title_text: String = ""
 var overlay_box: Control
 var settings_return: String = "menu"
 var theme_resource: Theme
@@ -41,12 +74,15 @@ const LED_PURPLE = Color("d65dff")
 const WHITE = Color("e6f7ff")
 const MUTED = Color("a79abb")
 const CORAL = Color("ff846f")
-const PIXEL_PLAYER_PREVIEW := "res://assets/characters/pixel_32/echo_runner_idle_0.png"
 const MENU_BACKGROUND := "res://assets/backgrounds/menu_resonance_console_v1.png"
 const ARMORY_BACKGROUND := "res://assets/backgrounds/armory_loadout_matrix_v1.png"
 const SETTINGS_BACKGROUND := "res://assets/backgrounds/settings_calibration_console_v2.png"
+const GAMEPLAY_HUD_BACKGROUND := "res://assets/backgrounds/gameplay_hud_overlay_v5.png"
+const PAUSE_BACKGROUND := "res://assets/backgrounds/pause_menu_overlay_v1.png"
+const REWARD_BACKGROUND := "res://assets/backgrounds/upgrade_reward_overlay_v1.png"
 const WeaponLoadoutStateScript = preload("res://scripts/ui/weapon_loadout_state.gd")
 const SettingsLayoutEditorScript = preload("res://scripts/ui/settings_layout_editor.gd")
+const HudLayoutEditorScript = preload("res://scripts/ui/hud_layout_editor.gd")
 const MENU_ACTION_ORIGIN := Vector2(425.0, 174.0)
 const MENU_ACTION_SIZE := Vector2(430.0, 76.0)
 const MENU_ACTION_GAP := 12.0
@@ -65,10 +101,79 @@ const SETTINGS_TOGGLE_SIZE := Vector2(492.0, 43.0)
 const SETTINGS_SAVE_RECT := Rect2(443.0, 596.0, 394.0, 58.0)
 const SETTINGS_LAYOUT_EDITOR_TEMPORARY_ENABLED := true
 const SETTINGS_LAYOUT_GROUP_IDS := ["title", "audio", "controls", "save"]
+const HUD_LAYOUT_VIEWPORT_SIZE := Vector2(1280.0, 720.0)
+const HUD_LAYOUT_ITEM_IDS := ["hp", "shield", "energy", "title", "weapon", "pause", "boss"]
+const TOUCH_LAYOUT_ITEM_IDS := ["move", "fire", "dash", "pulse"]
+const HUD_LAYOUT_EDITOR_ENABLED := true
+const ARMORY_LAYOUT_VIEWPORT_SIZE := Vector2(1280.0, 720.0)
+const ARMORY_LAYOUT_ITEM_IDS := [
+	"title",
+	"pistol_stt", "pistol_name", "pistol_action",
+	"smg_stt", "smg_name", "smg_action",
+	"shotgun_stt", "shotgun_name", "shotgun_action",
+	"rail_stt", "rail_name", "rail_action",
+	"beam_stt", "beam_name", "beam_action",
+	"disc_stt", "disc_name", "disc_action",
+	"arc_stt", "arc_name", "arc_action",
+	"wave_stt", "wave_name", "wave_action",
+	"glitch_stt", "glitch_name", "glitch_action",
+	"orbit_stt", "orbit_name", "orbit_action",
+	"blade_stt", "blade_name", "blade_action",
+	"chord_stt", "chord_name", "chord_action",
+]
+const ARMORY_LAYOUT_EDITOR_ENABLED := true
+const PAUSE_LAYOUT_EDITOR_ENABLED := true
+const HUD_TITLE_FONT_SIZE := 20
+const HUD_TITLE_HORIZONTAL_PADDING := 16.0
+const HUD_TITLE_VERTICAL_SIZE := 34.0
+const RESONANCE_BAR_SIZE := Vector2(72.0, 5.0)
+const RESONANCE_BAR_GAP := 4.0
+const PAUSE_LAYOUT_VIEWPORT_SIZE := Vector2(1280.0, 720.0)
+const PAUSE_LAYOUT_ITEM_IDS := ["title", "continue", "settings", "menu"]
+const PAUSE_ACTION_ORIGIN := Vector2(405.0, 232.0)
+const PAUSE_ACTION_SIZE := Vector2(470.0, 76.0)
+const PAUSE_ACTION_GAP := 20.0
+const PAUSE_TITLE_RECT := Rect2(405.0, 156.0, 470.0, 62.0)
+const PAUSE_TITLE_FONT_SIZE := 31
+const PAUSE_GLYPH_FONT_SIZE := 46
+const REWARD_TITLE_RECT := Rect2(364.0, 52.0, 552.0, 44.0)
+const REWARD_CARD_ORIGIN := Vector2(123.0, 157.0)
+const REWARD_CARD_SIZE := Vector2(330.0, 384.0)
+const REWARD_CARD_GAP := 30.0
+const REWARD_CARD_ACTION_RECT := Rect2(45.0, 305.0, 240.0, 60.0)
+const REWARD_REPAIR_RECT := Rect2(456.0, 584.0, 368.0, 62.0)
+const REWARD_LAYOUT_VIEWPORT_SIZE := Vector2(1280.0, 720.0)
+const REWARD_LAYOUT_ITEM_IDS := [
+	"title",
+	"card_01", "card_01_title", "card_01_description",
+	"card_02", "card_02_title", "card_02_description",
+	"card_03", "card_03_title", "card_03_description",
+	"repair",
+]
+const SUPPORT_TITLE_RECT := REWARD_TITLE_RECT
+const SUPPORT_STATUS_RECT := Rect2(190.0, 104.0, 900.0, 29.0)
+const SUPPORT_CARD_ICON_RECT := Rect2(115.0, 20.0, 100.0, 82.0)
+const SUPPORT_CARD_TITLE_RECT := Rect2(24.0, 112.0, 282.0, 60.0)
+const SUPPORT_CARD_DESCRIPTION_RECT := Rect2(24.0, 178.0, 282.0, 112.0)
+const SUPPORT_CARD_ACTION_RECT := REWARD_CARD_ACTION_RECT
+const SUPPORT_BACK_RECT := REWARD_REPAIR_RECT
+const SUPPORT_LAYOUT_VIEWPORT_SIZE := Vector2(1280.0, 720.0)
+const SUPPORT_LAYOUT_ITEM_IDS := [
+	"title", "status",
+	"card_01", "card_01_icon", "card_01_title", "card_01_description",
+	"card_02", "card_02_icon", "card_02_title", "card_02_description",
+	"card_03", "card_03_icon", "card_03_title", "card_03_description",
+	"back",
+]
 
 func setup(owner_game) -> void:
 	game = owner_game
 	_load_settings_layout_positions()
+	_load_hud_layout()
+	_load_armory_layout()
+	_load_pause_layout()
+	_load_reward_layout()
+	_load_support_layout()
 	font = load("res://assets/fonts/NotoSans-Regular.ttf")
 	bold = load("res://assets/fonts/NotoSans-Bold.ttf")
 	root = Control.new()
@@ -227,6 +332,36 @@ func gameplay_button(parent: Node, text: String, rect: Rect2, action: Callable, 
 	return node
 
 
+func round_gameplay_button(parent: Node, text: String, rect: Rect2, action: Callable, accent: Color) -> Button:
+	var node := gameplay_button(parent, text, rect, action, false, accent)
+	var radius := int(minf(rect.size.x, rect.size.y) * 0.5)
+	for state: String in ["normal", "hover", "pressed", "focus"]:
+		var fill := Color("05030a") if state == "normal" or state == "focus" else Color("0b0714") if state == "hover" else Color("140b20")
+		var style := led_style(fill, accent, 2)
+		style.set_corner_radius_all(radius)
+		node.add_theme_stylebox_override(state, style)
+	node.add_theme_color_override("font_color", accent)
+	node.add_theme_color_override("font_hover_color", accent)
+	node.add_theme_color_override("font_pressed_color", accent)
+	node.add_theme_color_override("font_focus_color", accent)
+	if text == "☰":
+		# Draw the menu glyph instead of relying on a font symbol that can vary
+		# between desktop and Android exports.
+		node.text = ""
+		var icon := Control.new()
+		icon.position = Vector2(rect.size.x * 0.5 - 12.0, rect.size.y * 0.5 - 9.0)
+		icon.size = Vector2(24.0, 18.0)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.draw.connect(func():
+			for y in [2.0, 9.0, 16.0]:
+				icon.draw_line(Vector2(1.0, y), Vector2(23.0, y), accent, 2.0, true)
+		)
+		node.add_child(icon)
+		icon.queue_redraw()
+	node.tooltip_text = text
+	return node
+
+
 func panel(parent: Node, rect: Rect2, color: Color = SURFACE, border: Color = Color("39284f")) -> Panel:
 	var node = Panel.new()
 	node.position = rect.position
@@ -280,6 +415,14 @@ func background_texture(parent: Node, path: String, stretch_mode: int = TextureR
 func clear_overlay() -> void:
 	settings_layout_editor = null
 	settings_layout_groups.clear()
+	armory_layout_editor = null
+	armory_layout_controls.clear()
+	pause_layout_editor = null
+	pause_layout_groups.clear()
+	reward_layout_editor = null
+	reward_layout_groups.clear()
+	support_layout_editor = null
+	support_layout_groups.clear()
 	for child in overlay.get_children():
 		if child is CanvasItem:
 			child.hide()
@@ -289,6 +432,8 @@ func clear_overlay() -> void:
 	overlay.visible = true
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	var shade = ColorRect.new()
+	shade.name = "Overlay_Dim"
+	shade.set_meta("overlay_dim", true)
 	shade.color = Color(0.025, 0.012, 0.065, 0.94)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -301,48 +446,195 @@ func hide_overlay() -> void:
 func move_overlay_to_front() -> void:
 	root.move_child(overlay, -1)
 
+func hud_layout_group(item_id: String, rect: Rect2) -> Control:
+	var group := Control.new()
+	group.name = "GameplayHud_%s" % item_id.capitalize()
+	group.position = hud_layout_position_for(item_id, rect.position)
+	group.size = rect.size
+	group.scale = hud_layout_scale_for(item_id)
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	group.set_meta("hud_layout_item_id", item_id)
+	group.set_meta("hud_layout_default_position", rect.position)
+	group.set_meta("hud_layout_default_scale", Vector2.ONE)
+	hud.add_child(group)
+	hud_layout_groups[item_id] = group
+	return group
+
+
+func hud_title_text() -> String:
+	if game == null:
+		return ""
+	if game.is_assignment_demo():
+		return "SANDBOX · KIỂM TRA CƠ CHẾ"
+	if not game.content is Dictionary:
+		return ""
+	var stages: Variant = game.content.get("stages", [])
+	if not stages is Array or stages.is_empty():
+		return ""
+	var stage_index := clampi(game.stage_index, 0, stages.size() - 1)
+	var stage: Variant = stages[stage_index]
+	return str(stage.get("name", "")) if stage is Dictionary else ""
+
+
+func hud_title_color() -> Color:
+	if game == null or game.is_assignment_demo() or not game.content is Dictionary:
+		return CYAN
+	var stages: Variant = game.content.get("stages", [])
+	if not stages is Array or stages.is_empty():
+		return CYAN
+	var stage_index := clampi(game.stage_index, 0, stages.size() - 1)
+	var stage: Variant = stages[stage_index]
+	return Color(str(stage.get("color", CYAN))) if stage is Dictionary else CYAN
+
+
+func apply_hud_title_theme() -> void:
+	if title_label == null:
+		return
+	var title_color := hud_title_color()
+	title_label.add_theme_color_override("font_color", title_color)
+	title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+	title_label.add_theme_constant_override("outline_size", 0)
+	title_label.add_theme_constant_override("shadow_outline_size", 0)
+	title_label.add_theme_constant_override("shadow_offset_x", 0)
+	title_label.add_theme_constant_override("shadow_offset_y", 0)
+
+
+func fit_hud_title_to_content() -> void:
+	var title_group: Control = hud_layout_groups.get("title")
+	if title_group == null or title_label == null or bold == null:
+		return
+	apply_hud_title_theme()
+	var text_metrics: Vector2 = bold.get_string_size(title_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, HUD_TITLE_FONT_SIZE)
+	var content_size := Vector2(maxf(1.0, ceil(text_metrics.x) + HUD_TITLE_HORIZONTAL_PADDING), HUD_TITLE_VERTICAL_SIZE)
+	var title_scale := title_group.scale
+	if not hud_title_anchor_valid:
+		if hud_layout_positions.has("title"):
+			# Saved HUD layouts store the group's top-left corner. Convert that
+			# legacy position to a visual center using the first title we render;
+			# subsequent map names keep this center even when their widths differ.
+			hud_title_anchor = title_group.position + Vector2(content_size.x * title_scale.x * 0.5, content_size.y * title_scale.y * 0.5)
+		else:
+			hud_title_anchor = Vector2(HUD_LAYOUT_VIEWPORT_SIZE.x * 0.5, 28.0 + HUD_TITLE_VERTICAL_SIZE * title_scale.y * 0.5)
+		hud_title_anchor_valid = true
+	hud_title_default_position = Vector2((HUD_LAYOUT_VIEWPORT_SIZE.x - content_size.x) * 0.5, 28.0)
+	title_group.size = content_size
+	title_group.set_meta("hud_layout_default_position", hud_title_default_position)
+	# Map names are measured as a single line. Keeping wrapping off prevents a
+	# name that is close to the measured width from changing the Label height and
+	# pushing its glyphs out of the vertically centered title box.
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.position = Vector2.ZERO
+	title_label.size = content_size
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var anchored_position := hud_title_anchor - Vector2(content_size.x * title_scale.x * 0.5, content_size.y * title_scale.y * 0.5)
+	title_group.position = Vector2(
+		clampf(anchored_position.x, 0.0, maxf(0.0, HUD_LAYOUT_VIEWPORT_SIZE.x - content_size.x * title_scale.x)),
+		clampf(anchored_position.y, 0.0, maxf(0.0, HUD_LAYOUT_VIEWPORT_SIZE.y - content_size.y * title_scale.y)))
+
+
 func build_hud() -> void:
 	hud = Control.new()
 	hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hud)
-	panel(hud, Rect2(52, 14, 1176, 83), Color("120c24"), Color("302144"))
-	texture(hud, PIXEL_PLAYER_PREVIEW, Rect2(66, 25, 48, 52))
-	health_label = label(hud, "", Rect2(126, 20, 278, 22), 16, WHITE, true)
-	create_bar("hp", Rect2(128, 48, 114, 9), CORAL)
-	create_bar("shield", Rect2(249, 48, 120, 9), CYAN)
-	create_bar("energy", Rect2(128, 66, 242, 7), Color("3478ff"))
-	title_label = label(hud, "", Rect2(398, 22, 352, 24), 20, WHITE, true)
-	room_label = label(hud, "", Rect2(398, 52, 360, 27), 14, MUTED)
-	weapon_label = label(hud, "", Rect2(765, 20, 252, 25), 17, CYAN, true)
-	secondary_weapon_label = label(hud, "", Rect2(765, 48, 240, 20), 13, MUTED)
-	create_bar("resonance", Rect2(765, 72, 235, 6), Color("9b4dff"))
-	map_button = gameplay_button(hud, "BẢN ĐỒ", Rect2(1040, 29, 103, 49), game.show_map)
-	gameplay_button(hud, "Ⅱ", Rect2(1153, 29, 57, 49), game.pause_game)
-	# Each pair intentionally occupies one fixed rect. The label tells the player
-	# what a click will do, so SoundOff/SoundOn and MusicOff/MusicOn never coexist.
+	# A transparent PNG owns the decorative HUD chassis. Every changing value,
+	# fill and hitbox below remains a real Godot control over this image layer.
+	hud_art = background_texture(hud, GAMEPLAY_HUD_BACKGROUND, TextureRect.STRETCH_SCALE)
+	hud_art.name = "GameplayHudDecor"
+	# Each resource rail is its own layout group. The values stay live Godot
+	# ProgressBars while F8 can move and resize HP, Shield and Mana separately.
+	health_label = null
+	var hp_group := hud_layout_group("hp", Rect2(84, 44, 194, 11))
+	create_bar("hp", Rect2(0, 0, 194, 11), CORAL, hp_group)
+	var shield_group := hud_layout_group("shield", Rect2(84, 62, 194, 11))
+	create_bar("shield", Rect2(0, 0, 194, 11), CYAN, shield_group)
+	var energy_group := hud_layout_group("energy", Rect2(84, 80, 194, 10))
+	create_bar("energy", Rect2(0, 0, 194, 10), Color("3478ff"), energy_group)
+	# Pulse is drawn by TouchControls. The live gauge starts at the authored
+	# default position and is re-anchored to the saved Pulse transform once the
+	# touch targets have been created.
+	create_bar("resonance", Rect2(1149, 713, RESONANCE_BAR_SIZE.x, RESONANCE_BAR_SIZE.y), CYAN)
+	var title_group := hud_layout_group("title", Rect2(0, 0, 1, 1))
+	title_label = plain_label(title_group, hud_title_text(), Rect2(Vector2.ZERO, Vector2.ONE), HUD_TITLE_FONT_SIZE, WHITE, true)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	room_label = plain_label(title_group, "", Rect2(Vector2.ZERO, Vector2.ZERO), 14, MUTED)
+	room_label.visible = false
+	fit_hud_title_to_content()
+	var weapon_group := hud_layout_group("weapon", Rect2(838, 11, 190, 86))
+	# Keep the slot itself as a real control so the player can see the currently
+	# equipped model inside a stable, transparent HUD frame. The model remains
+	# dynamic; only this container is decorative.
+	current_weapon_box = Panel.new()
+	current_weapon_box.name = "CurrentWeaponGameplaySlot"
+	current_weapon_box.position = Vector2(8, 6)
+	current_weapon_box.size = Vector2(174, 74)
+	var weapon_slot_style := StyleBoxFlat.new()
+	weapon_slot_style.bg_color = Color(0.02, 0.03, 0.09, 0.48)
+	weapon_slot_style.border_color = Color(CYAN.r, CYAN.g, CYAN.b, 0.9)
+	weapon_slot_style.set_border_width_all(1)
+	weapon_slot_style.set_corner_radius_all(8)
+	weapon_slot_style.shadow_color = Color(CYAN.r, CYAN.g, CYAN.b, 0.28)
+	weapon_slot_style.shadow_size = 4
+	weapon_slot_style.shadow_offset = Vector2.ZERO
+	current_weapon_box.add_theme_stylebox_override("panel", weapon_slot_style)
+	current_weapon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	weapon_group.add_child(current_weapon_box)
+	var initial_weapon_model := gameplay_weapon_model_path(hud_weapon_definition(game.active_slot))
+	current_weapon_preview = texture(weapon_group, initial_weapon_model, Rect2(55, 14, 80, 58))
+	current_weapon_preview.name = "CurrentWeaponGameplayModel"
+	current_weapon_preview.set_meta("hud_model_path", initial_weapon_model)
+	current_weapon_button = Button.new()
+	current_weapon_button.name = "Gameplay_WeaponSlotButton"
+	current_weapon_button.position = Vector2.ZERO
+	current_weapon_button.size = weapon_group.size
+	current_weapon_button.tooltip_text = "Chạm vào ô vũ khí để đổi vũ khí"
+	current_weapon_button.focus_mode = Control.FOCUS_NONE
+	current_weapon_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	current_weapon_button.flat = true
+	current_weapon_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	var weapon_slot_hitbox_style := StyleBoxEmpty.new()
+	for state: String in ["normal", "hover", "pressed", "focus", "disabled"]:
+		current_weapon_button.add_theme_stylebox_override(state, weapon_slot_hitbox_style)
+	current_weapon_button.add_theme_color_override("font_color", Color(0, 0, 0, 0))
+	current_weapon_button.add_theme_color_override("font_hover_color", Color(0, 0, 0, 0))
+	current_weapon_button.add_theme_color_override("font_pressed_color", Color(0, 0, 0, 0))
+	current_weapon_button.pressed.connect(game.swap_weapon)
+	current_weapon_button.set_meta("hud_weapon_slot_action", "swap")
+	weapon_group.add_child(current_weapon_button)
+	weapon_label = null
+	secondary_weapon_label = null
+	secondary_weapon_preview = null
+	# The gameplay HUD keeps only one circular action in the upper-right corner:
+	# a larger pause button aligned with the decorative ring in the HUD artwork.
+	menu_button = null
+	var pause_group := hud_layout_group("pause", Rect2(1180, 6, 86, 86))
+	pause_button = round_gameplay_button(pause_group, "Ⅱ", Rect2(0, 0, 86, 86), game.pause_game, CYAN)
+	pause_button.name = "Gameplay_PauseButton"
+	pause_button.add_theme_font_override("font", bold)
+	pause_button.add_theme_font_size_override("font_size", PAUSE_GLYPH_FONT_SIZE)
+	map_button = null
+	minimap = null
+	# These two switches are temporary controls for the assignment sandbox only;
+	# they are not part of the five-area gameplay HUD.
 	sound_toggle_button = gameplay_button(hud, "", sandbox_control_rect(0, 0), game.toggle_short_effects, false, CYAN)
 	music_toggle_button = gameplay_button(hud, "", sandbox_control_rect(0, 1), game.toggle_background_music, false, LED_PURPLE)
 	build_assignment_demo_controls()
-	status_label = label(hud, "", Rect2(300, 601, 545, 28), 18, CYAN, true)
-	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint_label = label(hud, "", Rect2(290, 637, 470, 62), 16, MUTED)
-	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	boss_label = label(hud, "", Rect2(384, 146, 512, 23), 16, CORAL, true)
+	# Gameplay no longer reserves a status line or tutorial footer; the map and
+	# controls stay readable without dynamic copy covering the playfield.
+	status_label = null
+	hint_label = null
+	var boss_group := hud_layout_group("boss", Rect2(384, 130, 512, 39))
+	boss_label = plain_label(boss_group, "", Rect2(0, 16, 512, 23), 16, CORAL, true)
 	boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	create_bar("boss", Rect2(390, 134, 500, 6), CORAL)
-	beat_display = Control.new()
-	beat_display.position = Vector2(672, 108)
-	beat_display.size = Vector2(50, 20)
-	beat_display.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	beat_display.draw.connect(draw_beat)
-	hud.add_child(beat_display)
-	minimap = Control.new()
-	minimap.position = Vector2(1031, 99)
-	minimap.size = Vector2(175, 25)
-	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	minimap.draw.connect(draw_minimap)
-	hud.add_child(minimap)
+	create_bar("boss", Rect2(6, 4, 500, 6), CORAL, boss_group)
+	# The rhythm clock remains active for combat logic; only its decorative HUD
+	# marker is removed from this screen.
+	beat_display = null
+	sound_toggle_button.visible = false
+	music_toggle_button.visible = false
 	refresh_runtime_audio_controls(true)
 
 
@@ -407,7 +699,7 @@ func apply_runtime_audio_visual(control: Button, enabled: bool, accent: Color) -
 	control.add_theme_color_override("font_pressed_color", text_color)
 	control.add_theme_color_override("font_focus_color", text_color)
 
-func create_bar(id: String, rect: Rect2, color: Color) -> void:
+func create_bar(id: String, rect: Rect2, color: Color, parent: Node = null) -> void:
 	var progress = ProgressBar.new()
 	progress.position = rect.position
 	progress.size = rect.size
@@ -421,10 +713,254 @@ func create_bar(id: String, rect: Rect2, color: Color) -> void:
 	fill_style.set_corner_radius_all(3)
 	progress.add_theme_stylebox_override("background", background_style)
 	progress.add_theme_stylebox_override("fill", fill_style)
-	hud.add_child(progress)
+	var target_parent: Node = hud if parent == null else parent
+	target_parent.add_child(progress)
 	# Reset after theme minimum-size invalidation; pre-theme sizing retains default height.
 	progress.set_deferred("size", rect.size)
 	bars[id] = progress
+
+
+func hud_layout_position_for(item_id: String, default_position: Vector2) -> Vector2:
+	var stored: Variant = hud_layout_positions.get(item_id, default_position)
+	if not stored is Vector2:
+		return default_position
+	return Vector2(clampf(stored.x, 0.0, HUD_LAYOUT_VIEWPORT_SIZE.x), clampf(stored.y, 0.0, HUD_LAYOUT_VIEWPORT_SIZE.y))
+
+
+func hud_layout_scale_for(item_id: String) -> Vector2:
+	var stored: Variant = hud_layout_scales.get(item_id, Vector2.ONE)
+	if not stored is Vector2:
+		return Vector2.ONE
+	return Vector2(clampf(stored.x, 0.55, 2.0), clampf(stored.y, 0.55, 2.0))
+
+
+func _load_hud_layout() -> void:
+	hud_layout_positions.clear()
+	hud_layout_scales.clear()
+	if game == null or not game.settings is Dictionary:
+		return
+	var stored: Variant = game.settings.get("hud_layout", {})
+	if not stored is Dictionary:
+		return
+	for item_id: String in HUD_LAYOUT_ITEM_IDS:
+		var encoded: Variant = stored.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not (encoded[0] is int or encoded[0] is float) or not (encoded[1] is int or encoded[1] is float):
+			continue
+		if not (encoded[2] is int or encoded[2] is float) or not (encoded[3] is int or encoded[3] is float):
+			continue
+		if not is_finite(float(encoded[0])) or not is_finite(float(encoded[1])) or not is_finite(float(encoded[2])) or not is_finite(float(encoded[3])):
+			continue
+		hud_layout_positions[item_id] = Vector2(float(encoded[0]), float(encoded[1]))
+		hud_layout_scales[item_id] = Vector2(float(encoded[2]), float(encoded[3]))
+		# A previous HUD version stored the pause circle at the old 52x52
+		# position. Treat only that authored default as legacy; preserve any
+		# position/scale the player deliberately saved in the F8 editor.
+		if item_id == "pause" and is_equal_approx(float(encoded[0]), 1092.0) and is_equal_approx(float(encoded[1]), 28.0) and is_equal_approx(float(encoded[2]), 1.0) and is_equal_approx(float(encoded[3]), 1.0):
+			hud_layout_positions.erase(item_id)
+			hud_layout_scales.erase(item_id)
+
+
+func armory_layout_scale_for(item_id: String) -> Vector2:
+	var stored: Variant = armory_layout_scales.get(item_id, Vector2.ONE)
+	if not stored is Vector2:
+		return Vector2.ONE
+	return Vector2(clampf(stored.x, 0.55, 2.0), clampf(stored.y, 0.55, 2.0))
+
+
+func armory_layout_position_for(item_id: String, default_rect: Rect2) -> Vector2:
+	var stored: Variant = armory_layout_positions.get(item_id, default_rect.position)
+	var desired_position: Vector2 = stored if stored is Vector2 else default_rect.position
+	var visual_size := default_rect.size * armory_layout_scale_for(item_id)
+	return Vector2(
+		clampf(desired_position.x, 0.0, maxf(0.0, ARMORY_LAYOUT_VIEWPORT_SIZE.x - visual_size.x)),
+		clampf(desired_position.y, 0.0, maxf(0.0, ARMORY_LAYOUT_VIEWPORT_SIZE.y - visual_size.y)))
+
+
+func armory_layout_apply_control(item_id: String, control: Control, default_rect: Rect2) -> Control:
+	control.position = armory_layout_position_for(item_id, default_rect)
+	control.size = default_rect.size
+	control.scale = armory_layout_scale_for(item_id)
+	control.set_meta("armory_layout_item_id", item_id)
+	control.set_meta("armory_layout_default_position", default_rect.position)
+	control.set_meta("armory_layout_default_scale", Vector2.ONE)
+	armory_layout_controls[item_id] = control
+	return control
+
+
+func _load_armory_layout() -> void:
+	armory_layout_positions.clear()
+	armory_layout_scales.clear()
+	if game == null or not game.settings is Dictionary:
+		return
+	var stored: Variant = game.settings.get("armory_layout", {})
+	if not stored is Dictionary:
+		return
+	for item_id: String in ARMORY_LAYOUT_ITEM_IDS:
+		var encoded: Variant = stored.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not (encoded[0] is int or encoded[0] is float) or not (encoded[1] is int or encoded[1] is float):
+			continue
+		if not (encoded[2] is int or encoded[2] is float) or not (encoded[3] is int or encoded[3] is float):
+			continue
+		if not is_finite(float(encoded[0])) or not is_finite(float(encoded[1])) or not is_finite(float(encoded[2])) or not is_finite(float(encoded[3])):
+			continue
+		armory_layout_positions[item_id] = Vector2(float(encoded[0]), float(encoded[1]))
+		armory_layout_scales[item_id] = Vector2(float(encoded[2]), float(encoded[3]))
+
+
+func pause_layout_scale_for(item_id: String) -> Vector2:
+	var stored: Variant = pause_layout_scales.get(item_id, Vector2.ONE)
+	if not stored is Vector2:
+		return Vector2.ONE
+	return Vector2(clampf(stored.x, 0.55, 2.0), clampf(stored.y, 0.55, 2.0))
+
+
+func pause_layout_position_for(item_id: String, default_rect: Rect2) -> Vector2:
+	var stored: Variant = pause_layout_positions.get(item_id, default_rect.position)
+	var desired_position: Vector2 = stored if stored is Vector2 else default_rect.position
+	var visual_size := default_rect.size * pause_layout_scale_for(item_id)
+	return Vector2(
+		clampf(desired_position.x, 0.0, maxf(0.0, PAUSE_LAYOUT_VIEWPORT_SIZE.x - visual_size.x)),
+		clampf(desired_position.y, 0.0, maxf(0.0, PAUSE_LAYOUT_VIEWPORT_SIZE.y - visual_size.y)))
+
+
+func pause_layout_apply_control(item_id: String, control: Control, default_rect: Rect2) -> Control:
+	control.position = pause_layout_position_for(item_id, default_rect)
+	control.size = default_rect.size
+	control.scale = pause_layout_scale_for(item_id)
+	control.set_meta("pause_layout_item_id", item_id)
+	control.set_meta("pause_layout_default_position", default_rect.position)
+	control.set_meta("pause_layout_default_scale", Vector2.ONE)
+	pause_layout_groups[item_id] = control
+	return control
+
+
+func _load_pause_layout() -> void:
+	pause_layout_positions.clear()
+	pause_layout_scales.clear()
+	if game == null or not game.settings is Dictionary:
+		return
+	var stored: Variant = game.settings.get("pause_layout", {})
+	if not stored is Dictionary:
+		return
+	for item_id: String in PAUSE_LAYOUT_ITEM_IDS:
+		var encoded: Variant = stored.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not (encoded[0] is int or encoded[0] is float) or not (encoded[1] is int or encoded[1] is float):
+			continue
+		if not (encoded[2] is int or encoded[2] is float) or not (encoded[3] is int or encoded[3] is float):
+			continue
+		if not is_finite(float(encoded[0])) or not is_finite(float(encoded[1])) or not is_finite(float(encoded[2])) or not is_finite(float(encoded[3])):
+			continue
+		pause_layout_positions[item_id] = Vector2(float(encoded[0]), float(encoded[1]))
+		pause_layout_scales[item_id] = Vector2(float(encoded[2]), float(encoded[3]))
+
+
+func _serialized_pause_layout() -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in PAUSE_LAYOUT_ITEM_IDS:
+		var group: Control = pause_layout_groups.get(item_id)
+		if group == null or not is_instance_valid(group):
+			continue
+		output[item_id] = [group.position.x, group.position.y, group.scale.x, group.scale.y]
+	return output
+
+
+func _sync_pause_layout_to_runtime_settings() -> void:
+	if game != null and game.settings is Dictionary:
+		game.settings["pause_layout"] = _serialized_pause_layout()
+
+
+func save_pause_layout() -> bool:
+	_sync_pause_layout_to_runtime_settings()
+	return game != null and game.persist_profile()
+
+
+func _serialized_armory_layout() -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in ARMORY_LAYOUT_ITEM_IDS:
+		var control: Control = armory_layout_controls.get(item_id)
+		if control == null or not is_instance_valid(control):
+			continue
+		output[item_id] = [control.position.x, control.position.y, control.scale.x, control.scale.y]
+	return output
+
+
+func _sync_armory_layout_to_runtime_settings() -> void:
+	if game != null and game.settings is Dictionary:
+		game.settings["armory_layout"] = _serialized_armory_layout()
+
+
+func save_armory_layout() -> bool:
+	_sync_armory_layout_to_runtime_settings()
+	return game != null and game.persist_profile()
+
+
+func _serialized_hud_layout() -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in HUD_LAYOUT_ITEM_IDS:
+		var group: Control = hud_layout_groups.get(item_id)
+		if group == null or not is_instance_valid(group):
+			continue
+		output[item_id] = [group.position.x, group.position.y, group.scale.x, group.scale.y]
+	return output
+
+
+func _sync_hud_layout_to_runtime_settings() -> void:
+	if game != null and game.settings is Dictionary:
+		game.settings["hud_layout"] = _serialized_hud_layout()
+
+
+func save_hud_layout() -> bool:
+	_sync_hud_layout_to_runtime_settings()
+	if game != null and game.controls != null:
+		game.controls.sync_touch_layout()
+	return game != null and game.persist_profile()
+
+
+func hud_weapon_definition(slot: int) -> Dictionary:
+	if game == null or game.weapon_system == null or game.weapons.is_empty():
+		return {}
+	var safe_slot := clampi(slot, 0, game.weapons.size() - 1)
+	return game.weapon_system.definition(game.weapons[safe_slot])
+
+
+func refresh_hud_weapon_preview(preview: TextureRect, weapon: Dictionary) -> void:
+	if preview == null or weapon.is_empty():
+		return
+	var model_path := gameplay_weapon_model_path(weapon)
+	if model_path.is_empty() or str(preview.get_meta("hud_model_path", "")) == model_path:
+		return
+	var model_resource: Resource = load(model_path)
+	if model_resource is Texture2D:
+		preview.texture = model_resource
+		preview.set_meta("hud_model_path", model_path)
+
+
+func sync_resonance_bar_layout() -> void:
+	var resonance_bar: ProgressBar = bars.get("resonance")
+	if resonance_bar == null or game == null or game.controls == null:
+		return
+	var pulse_target: Control = game.controls.touch_layout_target("pulse")
+	if pulse_target == null or not is_instance_valid(pulse_target):
+		return
+	var pulse_rect := Rect2(pulse_target.position, pulse_target.size * pulse_target.scale)
+	var pulse_center := pulse_rect.get_center()
+	var touch_scale := clampf(float(game.settings.get("touch_scale", 1.0)), 0.1, 4.0)
+	var pulse_visual_radius := minf(pulse_rect.size.x, pulse_rect.size.y) * 0.5 * touch_scale
+	var desired_position := Vector2(
+		pulse_center.x - RESONANCE_BAR_SIZE.x * 0.5,
+		pulse_center.y + pulse_visual_radius + RESONANCE_BAR_GAP)
+	var maximum_position := HUD_LAYOUT_VIEWPORT_SIZE - RESONANCE_BAR_SIZE
+	resonance_bar.position = Vector2(
+		clampf(desired_position.x, 0.0, maximum_position.x),
+		clampf(desired_position.y, 0.0, maximum_position.y))
+	resonance_bar.size = RESONANCE_BAR_SIZE
+
 
 func draw_minimap() -> void:
 	if game.graph.is_empty(): return
@@ -437,36 +973,41 @@ func draw_minimap() -> void:
 		var text: String = str(i + 1) if i < 4 else ("+" if i == 4 else "B")
 		minimap.draw_string(bold, at + Vector2(-5, 6), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, color)
 
-func draw_beat() -> void:
-	var current: int = posmod(game.rhythm.beat_index, 4)
-	for i in range(4):
-		var color: Color = CYAN if i == current else Color("473654")
-		var radius: float = 3 + (1.0 - game.rhythm.phase()) * 2 if i == current else 3.0
-		beat_display.draw_circle(Vector2(i * 15, 5), radius, color)
-
 func _process(_delta: float) -> void:
 	if game == null:
 		return
 	hud.visible = game.state not in ["menu", "game_over", "victory", "unlocks"]
+	if hud_layout_editor != null and game.state != "playing" and hud_layout_editor.is_editor_active():
+		hud_layout_editor.set_editor_active(false)
+	if pause_layout_editor != null and is_instance_valid(pause_layout_editor) and game.state != "paused" and pause_layout_editor.is_editor_active():
+		pause_layout_editor.set_editor_active(false)
 	if not hud.visible:
 		return
 	refresh_runtime_audio_controls()
 	var demo_visible: bool = game.is_assignment_demo() and game.state == "playing"
 	for control in demo_controls:
 		control.visible = demo_visible
+	if sound_toggle_button != null:
+		sound_toggle_button.visible = demo_visible
+	if music_toggle_button != null:
+		music_toggle_button.visible = demo_visible
 	var player = game.player
-	health_label.text = "HP %d   ◆ %d   ⚡ %d" % [ceili(player.hp), ceili(player.shield), ceili(player.energy)]
 	bars.hp.value = player.hp
 	bars.shield.max_value = player.max_shield
 	bars.shield.value = player.shield
 	bars.energy.max_value = player.max_energy
 	bars.energy.value = player.energy
+	sync_resonance_bar_layout()
+	bars.resonance.max_value = 100.0
 	bars.resonance.value = player.resonance
-	title_label.text = "SANDBOX · KIỂM TRA CƠ CHẾ" if game.is_assignment_demo() else "%02d  %s" % [game.stage_index + 1, game.content.stages[game.stage_index].name]
-	room_label.text = ("Phòng thử độc lập · %d tín dụng · %d:%02d" % [game.coins, int(game.elapsed) / 60, int(game.elapsed) % 60]) if game.is_assignment_demo() else "%s  ·  %d tín dụng  ·  %d:%02d" % [game.room_name(game.room_index), game.coins, int(game.elapsed) / 60, int(game.elapsed) % 60]
-	map_button.text = "HƯỚNG DẪN" if game.is_assignment_demo() else "BẢN ĐỒ"
-	weapon_label.text = "%d  %s" % [game.active_slot + 1, game.weapon_system.definition(game.weapons[game.active_slot]).name]
-	secondary_weapon_label.text = "↔  %d  %s  ·  %d%%" % [(1 - game.active_slot) + 1, game.weapon_system.definition(game.weapons[1 - game.active_slot]).name if game.weapons.size() == 2 else "Pulse Pistol", int(player.resonance)]
+	var next_hud_title := hud_title_text()
+	if _last_hud_title_text != next_hud_title:
+		_last_hud_title_text = next_hud_title
+		title_label.text = next_hud_title
+		fit_hud_title_to_content()
+	room_label.text = ""
+	var current_weapon: Dictionary = hud_weapon_definition(game.active_slot)
+	refresh_hud_weapon_preview(current_weapon_preview, current_weapon)
 	var boss: Vector2 = game.enemies.boss_health()
 	bars.boss.visible = boss.y > 0
 	boss_label.visible = boss.y > 0
@@ -474,25 +1015,6 @@ func _process(_delta: float) -> void:
 		bars.boss.max_value = boss.y
 		bars.boss.value = boss.x
 		boss_label.text = game.content.stages[game.stage_index].boss
-	status_label.text = game.flash_message if game.flash_time > 0 else game.interaction_label()
-	status_label.add_theme_color_override("font_color", game.flash_color if game.flash_time > 0 else CYAN)
-	if not game.save_error.is_empty():
-		hint_label.text = game.save_error
-	elif game.tutorial_step < 4 and game.stage_index == 0 and game.room_index == 0:
-		var hints: Array = ["Di chuyển: kéo vùng trái / WASD. Chấm trắng là tâm nhân vật.", "Giữ BẮN / chuột trái. Cảm ứng tự ngắm qua đường nhìn.", "Chạm DASH / Space để né. Lướt ngón từ BẮN sang DASH.", "Dash tránh đạn, laser và bẫy; không xuyên tường. Đúng nhịp được +18 cộng hưởng."]
-		hint_label.text = hints[game.tutorial_step]
-	elif game.is_assignment_demo():
-		hint_label.text = "1 ĐẠN · 2 TÊN LỬA · 3 TIA · F KHIÊN · H EMP · chạm X/Y/Z · NPC vào vùng đỏ sẽ báo 4 lần"
-	elif game.is_debug_map_tour():
-		hint_label.text = "DEBUG MAP · O bật/tắt rào phòng hiện tại · G gọi 1 đợt quái ở C1–C4 · U đấu boss · Y viền map · BẢN ĐỒ nhảy phòng · F6 mở editor"
-	elif game.player.resonance >= 100:
-		hint_label.text = "PULSE đã sẵn sàng · Chạm PULSE / Q để phá đạn"
-	elif not game.combat_active:
-		hint_label.text = "Đi bộ qua hành lang sáng; vùng đỏ vẫn bị chặn. Bản đồ cho biết lối đi." if game.is_open_route_stage() else "Đến cửa sáng và nhấn E / DÙNG. Bản đồ cho biết lối đi."
-	else:
-		hint_label.text = "DASH / Space  ·  PULSE / Q  ·  Đổi / Tab"
-	beat_display.queue_redraw()
-	minimap.queue_redraw()
 
 func show_menu() -> void:
 	clear_overlay()
@@ -584,32 +1106,370 @@ func modal_header(title: String, subtitle: String = "") -> void:
 	label(overlay, title, Rect2(90, 66, 1100, 65), 38, WHITE, true)
 	label(overlay, subtitle, Rect2(92, 138, 1090, 64), 19, MUTED)
 
-func show_rewards(choices: Array) -> void:
-	modal_header("TÍN HIỆU ĐÃ ĐƯỢC LÀM SẠCH", "Chọn một nâng cấp cho lượt chơi này. Chiến đấu và nhạc đang tạm dừng.")
-	for i in range(choices.size()):
-		var choice: Dictionary = choices[i]
-		var x: float = 90 + i * 374
-		panel(overlay, Rect2(x, 229, 352, 292), Color("1d1234"), Color("624089"))
-		label(overlay, "MODULE  %02d" % (i + 1), Rect2(x + 25, 250, 290, 28), 15, CYAN)
-		label(overlay, choice.name, Rect2(x + 25, 295, 297, 65), 26, WHITE, true)
-		label(overlay, choice.description, Rect2(x + 25, 370, 298, 125), 19, MUTED)
-		button(overlay, "CHỌN NÂNG CẤP", Rect2(x, 540, 352, 59), func(): game.choose_upgrade(choice.id), true)
-	button(overlay, "Sửa chữa +25 HP", Rect2(476, 638, 328, 49), func(): game.choose_upgrade("repair"))
+func show_rewards(choices: Array, preview: bool = false) -> void:
+	reward_layout_preview_active = preview
+	clear_overlay()
+	var reward_art := background_texture(overlay, REWARD_BACKGROUND, TextureRect.STRETCH_SCALE)
+	reward_art.name = "Reward_UpgradeArtwork"
+	reward_art.set_meta("reward_background_path", REWARD_BACKGROUND)
+	var title_group := reward_layout_group("title", REWARD_TITLE_RECT)
+	var title := plain_label(title_group, "NÂNG CẤP SAU PHÒNG", Rect2(Vector2.ZERO, REWARD_TITLE_RECT.size), 30, CYAN, true)
+	title.name = "Reward_Title"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var first_choice_button: Button = null
+	for index in range(3):
+		var card_rect := Rect2(REWARD_CARD_ORIGIN + Vector2(index * (REWARD_CARD_SIZE.x + REWARD_CARD_GAP), 0.0), REWARD_CARD_SIZE)
+		var choice: Dictionary = choices[index] if index < choices.size() else {}
+		var card_button := reward_choice_card(index, choice, card_rect)
+		if first_choice_button == null and card_button != null:
+			first_choice_button = card_button
+	var repair_button := reward_repair_button()
+	show_reward_layout_editor()
+	if preview and reward_layout_editor != null:
+		reward_layout_editor.set_editor_active(true)
+		overlay.move_child(reward_layout_editor, -1)
+	elif first_choice_button != null:
+		first_choice_button.grab_focus()
+	else:
+		repair_button.grab_focus()
+
+
+func show_reward_layout_preview() -> void:
+	if not reward_layout_editor_is_available() or game.state != "playing":
+		return
+	reward_preview_restore_state = game.state
+	game.state = "reward"
+	game.controls.reset()
+	game.rhythm.pause_music()
+	var preview_choices: Array = []
+	for upgrade in game.content.upgrades:
+		preview_choices.append(upgrade)
+		if preview_choices.size() == 3:
+			break
+	show_rewards(preview_choices, true)
+
+
+func close_reward_layout_preview() -> void:
+	if not reward_layout_preview_active:
+		return
+	reward_layout_preview_active = false
+	var restore_state := reward_preview_restore_state
+	reward_preview_restore_state = ""
+	if game == null:
+		hide_overlay()
+		return
+	if restore_state == "playing":
+		# Re-enter the regular resume lifecycle so controls, music, invulnerability,
+		# and the enemy grace window are restored together after preview mode.
+		game.state = "paused"
+		game.resume_game()
+	else:
+		hide_overlay()
+
+
+func reward_choice_card(index: int, choice: Dictionary, rect: Rect2) -> Button:
+	var group := Control.new()
+	group.name = "Reward_Card_%02d" % (index + 1)
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reward_layout_apply_control("card_%02d" % (index + 1), group, rect)
+	group.set_meta("reward_card_index", index)
+	group.set_meta("reward_card_rect", rect)
+	overlay.add_child(group)
+	var choice_id := str(choice.get("id", ""))
+	if choice_id.is_empty():
+		var empty_label := plain_label(group, "KHÔNG CÓ MODULE", Rect2(24.0, 168.0, 282.0, 45.0), 18, CYAN, true)
+		empty_label.name = "Reward_Card_%02d_Empty" % (index + 1)
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		return null
+	var title_rect := Rect2(24.0, 66.0, 282.0, 78.0)
+	var title_label := plain_label(group, str(choice.get("name", "")), title_rect, 23, CYAN, true)
+	title_label.name = "Reward_Card_%02d_Title" % (index + 1)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reward_layout_apply_child_control("card_%02d_title" % (index + 1), title_label, title_rect, REWARD_CARD_SIZE)
+	var description_rect := Rect2(24.0, 157.0, 282.0, 132.0)
+	var description_label := plain_label(group, str(choice.get("description", "")), description_rect, 16, CYAN)
+	description_label.name = "Reward_Card_%02d_Description" % (index + 1)
+	description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	description_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	reward_layout_apply_child_control("card_%02d_description" % (index + 1), description_label, description_rect, REWARD_CARD_SIZE)
+	var target := Button.new()
+	target.name = "Reward_Card_%02d_Hitbox" % (index + 1)
+	target.text = "CHỌN NÂNG CẤP"
+	target.tooltip_text = "Chọn nâng cấp: %s" % str(choice.get("name", ""))
+	target.position = REWARD_CARD_ACTION_RECT.position
+	target.size = REWARD_CARD_ACTION_RECT.size
+	target.focus_mode = Control.FOCUS_ALL
+	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	target.flat = true
+	target.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target.add_theme_font_override("font", bold)
+	target.add_theme_font_size_override("font_size", 14)
+	target.set_meta("reward_choice_id", choice_id)
+	target.set_meta("reward_card_index", index)
+	target.set_meta("reward_action_rect", REWARD_CARD_ACTION_RECT)
+	for state: String in ["normal", "disabled", "hover", "focus", "pressed"]:
+		target.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	target.add_theme_color_override("font_color", CYAN)
+	target.add_theme_color_override("font_disabled_color", CYAN)
+	target.add_theme_color_override("font_hover_color", CYAN)
+	target.add_theme_color_override("font_pressed_color", CYAN)
+	target.add_theme_color_override("font_focus_color", CYAN)
+	target.disabled = reward_layout_preview_active
+	target.pressed.connect(func(): game.choose_upgrade(choice_id))
+	group.add_child(target)
+	return target
+
+
+func reward_repair_button() -> Button:
+	var target := Button.new()
+	target.name = "Reward_RepairButton"
+	target.text = "SỬA CHỮA  +25 HP"
+	target.tooltip_text = "Sửa chữa và hồi 25 HP"
+	reward_layout_apply_control("repair", target, REWARD_REPAIR_RECT)
+	target.focus_mode = Control.FOCUS_ALL
+	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	target.flat = true
+	target.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target.add_theme_font_override("font", bold)
+	target.add_theme_font_size_override("font_size", 16)
+	target.set_meta("reward_choice_id", "repair")
+	target.set_meta("reward_action_rect", REWARD_REPAIR_RECT)
+	for state: String in ["normal", "disabled", "hover", "focus", "pressed"]:
+		target.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	target.add_theme_color_override("font_color", CYAN)
+	target.add_theme_color_override("font_disabled_color", CYAN)
+	target.add_theme_color_override("font_hover_color", CYAN)
+	target.add_theme_color_override("font_pressed_color", CYAN)
+	target.add_theme_color_override("font_focus_color", CYAN)
+	target.disabled = reward_layout_preview_active
+	target.pressed.connect(func(): game.choose_upgrade("repair"))
+	overlay.add_child(target)
+	return target
+
+
+func reward_layout_group(item_id: String, default_rect: Rect2) -> Control:
+	var group := Control.new()
+	group.name = "Reward_Layout_%s" % item_id
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reward_layout_apply_control(item_id, group, default_rect)
+	overlay.add_child(group)
+	return group
+
+
+func reward_layout_scale_for(item_id: String) -> Vector2:
+	var stored: Variant = reward_layout_scales.get(item_id, Vector2.ONE)
+	if not stored is Vector2:
+		return Vector2.ONE
+	return Vector2(clampf(stored.x, 0.55, 2.0), clampf(stored.y, 0.55, 2.0))
+
+
+func reward_layout_position_for(item_id: String, default_rect: Rect2) -> Vector2:
+	var stored: Variant = reward_layout_positions.get(item_id, default_rect.position)
+	var desired_position: Vector2 = stored if stored is Vector2 else default_rect.position
+	var visual_size := default_rect.size * reward_layout_scale_for(item_id)
+	return Vector2(
+		clampf(desired_position.x, 0.0, maxf(0.0, REWARD_LAYOUT_VIEWPORT_SIZE.x - visual_size.x)),
+		clampf(desired_position.y, 0.0, maxf(0.0, REWARD_LAYOUT_VIEWPORT_SIZE.y - visual_size.y)))
+
+
+func reward_layout_apply_control(item_id: String, control: Control, default_rect: Rect2) -> Control:
+	control.position = reward_layout_position_for(item_id, default_rect)
+	control.size = default_rect.size
+	control.scale = reward_layout_scale_for(item_id)
+	control.set_meta("reward_layout_item_id", item_id)
+	control.set_meta("reward_layout_default_position", default_rect.position)
+	control.set_meta("reward_layout_default_scale", Vector2.ONE)
+	reward_layout_groups[item_id] = control
+	return control
+
+
+func reward_layout_apply_child_control(item_id: String, control: Control, default_rect: Rect2, parent_size: Vector2) -> Control:
+	var stored: Variant = reward_layout_positions.get(item_id, default_rect.position)
+	var desired_position: Vector2 = stored if stored is Vector2 else default_rect.position
+	var scale := reward_layout_scale_for(item_id)
+	var visual_size := default_rect.size * scale
+	control.position = Vector2(
+		clampf(desired_position.x, 0.0, maxf(0.0, parent_size.x - visual_size.x)),
+		clampf(desired_position.y, 0.0, maxf(0.0, parent_size.y - visual_size.y)))
+	control.size = default_rect.size
+	control.scale = scale
+	control.set_meta("reward_layout_item_id", item_id)
+	control.set_meta("reward_layout_default_position", default_rect.position)
+	control.set_meta("reward_layout_default_scale", Vector2.ONE)
+	reward_layout_groups[item_id] = control
+	return control
+
+
+func _load_reward_layout() -> void:
+	reward_layout_positions.clear()
+	reward_layout_scales.clear()
+	if game == null or not game.settings is Dictionary:
+		return
+	var stored: Variant = game.settings.get("reward_layout", {})
+	if not stored is Dictionary:
+		return
+	for item_id: String in REWARD_LAYOUT_ITEM_IDS:
+		var encoded: Variant = stored.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not (encoded[0] is int or encoded[0] is float) or not (encoded[1] is int or encoded[1] is float):
+			continue
+		if not (encoded[2] is int or encoded[2] is float) or not (encoded[3] is int or encoded[3] is float):
+			continue
+		if not is_finite(float(encoded[0])) or not is_finite(float(encoded[1])) or not is_finite(float(encoded[2])) or not is_finite(float(encoded[3])):
+			continue
+		reward_layout_positions[item_id] = Vector2(float(encoded[0]), float(encoded[1]))
+		reward_layout_scales[item_id] = Vector2(float(encoded[2]), float(encoded[3]))
+
+
+func _serialized_reward_layout() -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in REWARD_LAYOUT_ITEM_IDS:
+		var group: Control = reward_layout_groups.get(item_id)
+		if group == null or not is_instance_valid(group):
+			continue
+		output[item_id] = [group.position.x, group.position.y, group.scale.x, group.scale.y]
+	return output
+
+
+func _sync_reward_layout_to_runtime_settings() -> void:
+	if game != null and game.settings is Dictionary:
+		game.settings["reward_layout"] = _serialized_reward_layout()
+
+
+func save_reward_layout() -> bool:
+	_sync_reward_layout_to_runtime_settings()
+	return game != null and game.persist_profile()
+
+
+func show_reward_layout_editor() -> void:
+	if not reward_layout_editor_is_available():
+		return
+	var editor = HudLayoutEditorScript.new()
+	editor.name = "Reward_LayoutEditor"
+	editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(editor)
+	var entries: Array = [{"id": "title", "target": reward_layout_groups.get("title"), "label": "TIÊU ĐỀ", "accent": CYAN, "default_position": REWARD_TITLE_RECT.position, "default_scale": Vector2.ONE}]
+	for index in range(3):
+		var card_id := "card_%02d" % (index + 1)
+		var card_position := REWARD_CARD_ORIGIN + Vector2(index * (REWARD_CARD_SIZE.x + REWARD_CARD_GAP), 0.0)
+		entries.append({"id": card_id, "target": reward_layout_groups.get(card_id), "label": "KHUNG CARD %02d" % (index + 1), "accent": CYAN, "default_position": card_position, "default_scale": Vector2.ONE})
+		entries.append({"id": "%s_title" % card_id, "target": reward_layout_groups.get("%s_title" % card_id), "label": "TÊN CARD %02d" % (index + 1), "accent": CYAN, "default_position": Vector2(24.0, 66.0), "default_scale": Vector2.ONE, "global_canvas": true})
+		entries.append({"id": "%s_description" % card_id, "target": reward_layout_groups.get("%s_description" % card_id), "label": "MÔ TẢ CARD %02d" % (index + 1), "accent": CYAN, "default_position": Vector2(24.0, 157.0), "default_scale": Vector2.ONE, "global_canvas": true})
+	entries.append({"id": "repair", "target": reward_layout_groups.get("repair"), "label": "SỬA CHỮA", "accent": CYAN, "default_position": REWARD_REPAIR_RECT.position, "default_scale": Vector2.ONE})
+	editor.configure(entries, font, bold, "CHỈNH NÂNG CẤP · kéo card để di chuyển · tên/mô tả card có khung riêng · kéo cạnh/góc để đổi cỡ · F11: lưu · R: mặc định")
+	editor.item_changed.connect(_on_reward_layout_item_changed)
+	reward_layout_editor = editor
+	editor.set_editor_active(false)
+
+
+func reward_layout_editor_is_available() -> bool:
+	return OS.is_debug_build() and game != null and not game.test_mode
+
+
+func _on_reward_layout_item_changed(item_id: String, position: Vector2, scale: Vector2) -> void:
+	reward_layout_positions[item_id] = position
+	reward_layout_scales[item_id] = scale
+	_sync_reward_layout_to_runtime_settings()
+
 
 func show_pause() -> void:
-	modal_header("TẠM DỪNG", "Tiếp tục khi bạn sẵn sàng. Nhạc và giao tranh sẽ cùng tiếp tục; mọi thao tác đang giữ đã được xóa.")
-	panel(overlay, Rect2(92, 228, 665, 350))
-	label(overlay, game.content.stages[game.stage_index].name, Rect2(122, 253, 605, 45), 29, CYAN, true)
-	label(overlay, "%s\nSeed %d · %d tín dụng\nCheckpoint được ghi sau phòng và sau khi chọn thưởng." % [game.room_name(game.room_index), game.seed_value, game.coins], Rect2(122, 318, 605, 118), 21, MUTED)
-	for i in range(game.weapons.size()):
-		var weapon: Dictionary = game.weapon_system.definition(game.weapons[i])
-		texture(overlay, gameplay_weapon_model_path(weapon), Rect2(121 + i * 293, 454, 51, 51))
-		label(overlay, "%d · %s" % [i + 1, weapon.name], Rect2(182 + i * 293, 460, 220, 51), 18, WHITE)
-	button(overlay, "TIẾP TỤC", Rect2(812, 230, 375, 64), game.resume_game, true).grab_focus()
-	button(overlay, "Cài đặt", Rect2(812, 314, 375, 57), func(): show_settings("paused"))
-	button(overlay, "Gọi lại Pulse Pistol", Rect2(812, 391, 375, 57), func(): game.recall_pistol(); show_pause())
-	button(overlay, "Về menu · giữ checkpoint", Rect2(812, 468, 375, 57), game.return_to_menu)
-	label(overlay, "Hết năng lượng: tự bắn Pulse Pistol miễn phí cho đến khi năng lượng hồi đủ.", Rect2(123, 614, 1020, 55), 19, MUTED)
+	clear_overlay()
+	var pause_art := background_texture(overlay, PAUSE_BACKGROUND, TextureRect.STRETCH_SCALE)
+	pause_art.name = "Pause_MenuArtwork"
+	pause_art.set_meta("pause_background_path", PAUSE_BACKGROUND)
+	var title_group := Control.new()
+	title_group.name = "Pause_TitleGroup"
+	title_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pause_layout_apply_control("title", title_group, PAUSE_TITLE_RECT)
+	var title := label(title_group, "TẠM DỪNG", Rect2(Vector2.ZERO, PAUSE_TITLE_RECT.size), PAUSE_TITLE_FONT_SIZE, CYAN, true)
+	title.name = "Pause_Title"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	overlay.add_child(title_group)
+	var continue_button := pause_action("continue", "TIẾP TỤC", pause_action_rect(0), game.resume_game, CYAN)
+	pause_action("settings", "CÀI ĐẶT", pause_action_rect(1), func(): show_settings("paused"), LED_PURPLE)
+	pause_action("menu", "MENU", pause_action_rect(2), game.return_to_menu, CYAN)
+	show_pause_layout_editor()
+	continue_button.grab_focus()
+
+
+func pause_action_rect(index: int) -> Rect2:
+	return Rect2(PAUSE_ACTION_ORIGIN + Vector2(0.0, index * (PAUSE_ACTION_SIZE.y + PAUSE_ACTION_GAP)), PAUSE_ACTION_SIZE)
+
+
+func pause_action(action_id: String, title_text: String, rect: Rect2, action: Callable, accent: Color) -> Button:
+	var group := Control.new()
+	group.name = "Pause_Action_%s" % action_id.capitalize()
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pause_layout_apply_control(action_id, group, rect)
+	# The artwork owns the decorative chassis. At runtime each pause action is
+	# intentionally only its centered text plus an invisible rectangular target;
+	# the F10 editor remains responsible for showing the editable rectangle.
+	var title_label := plain_label(group, title_text, Rect2(0.0, 13.0, rect.size.x, rect.size.y - 26.0), 24, accent, true)
+	title_label.name = "Pause_%s_Label" % action_id.capitalize()
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	var target := Button.new()
+	target.name = "Pause_%s_Hitbox" % action_id.capitalize()
+	target.text = title_text
+	target.tooltip_text = title_text
+	target.position = Vector2.ZERO
+	target.size = rect.size
+	target.focus_mode = Control.FOCUS_ALL
+	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	target.flat = true
+	target.set_meta("pause_action_id", action_id)
+	target.set_meta("pause_art_rect", rect)
+	target.set_meta("pause_hitbox_visual", "invisible")
+	# Do not draw a hover, focus, or pressed treatment over the authored button
+	# frames. The label is the only runtime-visible part of this action.
+	for state: String in ["normal", "disabled", "focus", "hover", "pressed"]:
+		target.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	var invisible_text := Color(1, 1, 1, 0)
+	target.add_theme_color_override("font_color", invisible_text)
+	target.add_theme_color_override("font_hover_color", invisible_text)
+	target.add_theme_color_override("font_pressed_color", invisible_text)
+	target.add_theme_color_override("font_focus_color", invisible_text)
+	target.add_theme_color_override("font_disabled_color", invisible_text)
+	target.pressed.connect(action)
+	group.add_child(target)
+	overlay.add_child(group)
+	return target
+
+
+func show_pause_layout_editor() -> void:
+	if not pause_layout_editor_is_available():
+		return
+	var editor = HudLayoutEditorScript.new()
+	editor.name = "Pause_LayoutEditor"
+	editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(editor)
+	var entries: Array = [
+		{"id": "title", "target": pause_layout_groups.get("title"), "label": "TẠM DỪNG", "accent": CYAN, "default_position": PAUSE_TITLE_RECT.position, "default_scale": Vector2.ONE},
+		{"id": "continue", "target": pause_layout_groups.get("continue"), "label": "TIẾP TỤC", "accent": CYAN, "default_position": PAUSE_ACTION_ORIGIN, "default_scale": Vector2.ONE},
+		{"id": "settings", "target": pause_layout_groups.get("settings"), "label": "CÀI ĐẶT", "accent": LED_PURPLE, "default_position": pause_action_rect(1).position, "default_scale": Vector2.ONE},
+		{"id": "menu", "target": pause_layout_groups.get("menu"), "label": "MENU", "accent": CYAN, "default_position": pause_action_rect(2).position, "default_scale": Vector2.ONE},
+	]
+	editor.configure(entries, font, bold, "CHỈNH TẠM DỪNG · kéo khung để di chuyển · kéo cạnh/góc để đổi cỡ chữ hoặc nút · F10: lưu · R: mặc định")
+	editor.item_changed.connect(_on_pause_layout_item_changed)
+	pause_layout_editor = editor
+	editor.set_editor_active(false)
+
+
+func pause_layout_editor_is_available() -> bool:
+	return PAUSE_LAYOUT_EDITOR_ENABLED and OS.is_debug_build() and game != null and not game.test_mode
+
+
+func _on_pause_layout_item_changed(item_id: String, position: Vector2, scale: Vector2) -> void:
+	pause_layout_positions[item_id] = position
+	pause_layout_scales[item_id] = scale
+	_sync_pause_layout_to_runtime_settings()
 
 func show_map() -> void:
 	var continuous_route: bool = game.is_open_route_stage()
@@ -645,24 +1505,249 @@ func show_map() -> void:
 
 func show_shop(offers: Array) -> void:
 	var kind: String = game.graph.support
-	modal_header("TRẠM HỖ TRỢ", "Chọn một dịch vụ. Vũ khí sẽ thay ô đang cầm: %s · Bạn có %d tín dụng." % [game.weapon_system.definition(game.weapons[game.active_slot]).name, game.coins])
 	if kind == "heal":
+		modal_header("TRẠM HỖ TRỢ", "Chọn một dịch vụ. Vũ khí sẽ thay ô đang cầm: %s · Bạn có %d tín dụng." % [game.weapon_system.definition(game.weapons[game.active_slot]).name, game.coins])
 		panel(overlay, Rect2(250, 238, 780, 271))
 		label(overlay, "Trạm tái tạo", Rect2(291, 270, 690, 52), 32, CYAN, true)
 		label(overlay, "Hồi 45 máu, đầy khiên và năng lượng. Chỉ dùng một lần trong khu vực.", Rect2(291, 348, 690, 82), 25, MUTED)
 		button(overlay, "TÁI TẠO MIỄN PHÍ", Rect2(420, 536, 440, 62), game.heal_support, true)
 	else:
 		var price: int = 0 if kind == "chest" else 55 + game.stage_index * 12
-		for i in range(offers.size()):
-			var offer: Dictionary = offers[i]
-			var x: float = 90 + i * 374
-			panel(overlay, Rect2(x, 224, 352, 311))
-			texture(overlay, gameplay_weapon_model_path(offer), Rect2(x + 125, 243, 94, 79))
-			label(overlay, offer.name, Rect2(x + 23, 334, 308, 40), 24, WHITE, true)
-			label(overlay, offer.description, Rect2(x + 23, 385, 307, 128), 18, MUTED)
-			var buy = button(overlay, "NHẬN MIỄN PHÍ" if price == 0 else "MUA · %d TÍN DỤNG" % price, Rect2(x, 551, 352, 59), func(): game.buy_weapon(offer.id), true)
-			buy.disabled = game.coins < price
-	button(overlay, "Để sau · trở lại phòng", Rect2(440, 645, 400, 48), game.resume_game)
+		show_support_weapon_choices(offers, price)
+
+
+func show_support_weapon_choices(offers: Array, price: int) -> void:
+	clear_overlay()
+	var support_art := background_texture(overlay, REWARD_BACKGROUND, TextureRect.STRETCH_SCALE)
+	support_art.name = "Support_WeaponArtwork"
+	support_art.set_meta("support_background_path", REWARD_BACKGROUND)
+	var title_group := support_layout_group("title", SUPPORT_TITLE_RECT)
+	var title := plain_label(title_group, "TRẠM HỖ TRỢ", Rect2(Vector2.ZERO, SUPPORT_TITLE_RECT.size), 30, CYAN, true)
+	title.name = "Support_Title"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var status_group := support_layout_group("status", SUPPORT_STATUS_RECT)
+	var current_weapon_name: String = str(game.weapon_system.definition(game.weapons[game.active_slot]).name)
+	var status := plain_label(status_group, "ĐỔI Ô ĐANG CẦM: %s · %d TÍN DỤNG" % [current_weapon_name, game.coins], Rect2(Vector2.ZERO, SUPPORT_STATUS_RECT.size), 17, CYAN)
+	status.name = "Support_Status"
+	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var first_button: Button = null
+	for index in range(3):
+		var card_rect := Rect2(REWARD_CARD_ORIGIN + Vector2(index * (REWARD_CARD_SIZE.x + REWARD_CARD_GAP), 0.0), REWARD_CARD_SIZE)
+		var offer: Dictionary = offers[index] if index < offers.size() else {}
+		var choice_button := support_weapon_card(index, offer, card_rect, price)
+		if first_button == null and choice_button != null:
+			first_button = choice_button
+	var back_button := support_back_button()
+	show_support_layout_editor()
+	if first_button != null:
+		first_button.grab_focus()
+	else:
+		back_button.grab_focus()
+
+
+func support_weapon_card(index: int, offer: Dictionary, rect: Rect2, price: int) -> Button:
+	var card_id := "card_%02d" % (index + 1)
+	var group := Control.new()
+	group.name = "Support_Card_%02d" % (index + 1)
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	support_layout_apply_control(card_id, group, rect)
+	group.set_meta("support_card_index", index)
+	overlay.add_child(group)
+	var offer_id := str(offer.get("id", ""))
+	if offer_id.is_empty():
+		var empty_label := plain_label(group, "KHÔNG CÓ VŨ KHÍ", Rect2(24.0, 168.0, 282.0, 45.0), 18, CYAN, true)
+		empty_label.name = "Support_Card_%02d_Empty" % (index + 1)
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		return null
+
+	var icon_layout := Control.new()
+	icon_layout.name = "Support_Card_%02d_IconLayout" % (index + 1)
+	icon_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	support_layout_apply_child_control("%s_icon" % card_id, icon_layout, SUPPORT_CARD_ICON_RECT, REWARD_CARD_SIZE)
+	group.add_child(icon_layout)
+	var icon := texture(icon_layout, gameplay_weapon_model_path(offer), Rect2(Vector2.ZERO, SUPPORT_CARD_ICON_RECT.size))
+	icon.name = "Support_Card_%02d_Icon" % (index + 1)
+
+	var title_label := plain_label(group, str(offer.get("name", "")), SUPPORT_CARD_TITLE_RECT, 23, CYAN, true)
+	title_label.name = "Support_Card_%02d_Title" % (index + 1)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	support_layout_apply_child_control("%s_title" % card_id, title_label, SUPPORT_CARD_TITLE_RECT, REWARD_CARD_SIZE)
+	var description_label := plain_label(group, str(offer.get("description", "")), SUPPORT_CARD_DESCRIPTION_RECT, 16, CYAN)
+	description_label.name = "Support_Card_%02d_Description" % (index + 1)
+	description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	description_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	support_layout_apply_child_control("%s_description" % card_id, description_label, SUPPORT_CARD_DESCRIPTION_RECT, REWARD_CARD_SIZE)
+
+	var action_text := "NHẬN MIỄN PHÍ" if price == 0 else "MUA · %d TÍN DỤNG" % price
+	var action_button := support_text_button(group, action_text, SUPPORT_CARD_ACTION_RECT, func(): game.buy_weapon(offer_id), "Trang bị %s" % str(offer.get("name", "")))
+	action_button.name = "Support_Card_%02d_Hitbox" % (index + 1)
+	action_button.disabled = game.coins < price
+	return action_button
+
+
+func support_back_button() -> Button:
+	var target := support_text_button(overlay, "ĐỂ SAU · TRỞ LẠI PHÒNG", SUPPORT_BACK_RECT, game.resume_game, "Bỏ qua trạm hỗ trợ và trở lại phòng")
+	target.name = "Support_BackButton"
+	support_layout_apply_control("back", target, SUPPORT_BACK_RECT)
+	return target
+
+
+func support_text_button(parent: Node, text_value: String, rect: Rect2, action: Callable, tooltip: String) -> Button:
+	var target := Button.new()
+	target.text = text_value
+	target.position = rect.position
+	target.size = rect.size
+	target.focus_mode = Control.FOCUS_ALL
+	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	target.flat = true
+	target.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target.tooltip_text = tooltip
+	target.add_theme_font_override("font", bold)
+	target.add_theme_font_size_override("font_size", 16)
+	for state: String in ["normal", "disabled", "hover", "focus", "pressed"]:
+		target.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	target.add_theme_color_override("font_color", CYAN)
+	target.add_theme_color_override("font_disabled_color", Color(CYAN.r, CYAN.g, CYAN.b, 0.42))
+	target.add_theme_color_override("font_hover_color", CYAN)
+	target.add_theme_color_override("font_pressed_color", CYAN)
+	target.add_theme_color_override("font_focus_color", CYAN)
+	target.pressed.connect(action)
+	parent.add_child(target)
+	return target
+
+
+func support_layout_group(item_id: String, default_rect: Rect2) -> Control:
+	var group := Control.new()
+	group.name = "Support_Layout_%s" % item_id
+	group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	support_layout_apply_control(item_id, group, default_rect)
+	overlay.add_child(group)
+	return group
+
+
+func support_layout_scale_for(item_id: String) -> Vector2:
+	var stored: Variant = support_layout_scales.get(item_id, Vector2.ONE)
+	if not stored is Vector2:
+		return Vector2.ONE
+	return Vector2(clampf(stored.x, 0.55, 2.0), clampf(stored.y, 0.55, 2.0))
+
+
+func support_layout_position_for(item_id: String, default_rect: Rect2) -> Vector2:
+	var stored: Variant = support_layout_positions.get(item_id, default_rect.position)
+	var desired_position: Vector2 = stored if stored is Vector2 else default_rect.position
+	var visual_size := default_rect.size * support_layout_scale_for(item_id)
+	return Vector2(
+		clampf(desired_position.x, 0.0, maxf(0.0, SUPPORT_LAYOUT_VIEWPORT_SIZE.x - visual_size.x)),
+		clampf(desired_position.y, 0.0, maxf(0.0, SUPPORT_LAYOUT_VIEWPORT_SIZE.y - visual_size.y)))
+
+
+func support_layout_apply_control(item_id: String, control: Control, default_rect: Rect2) -> Control:
+	control.position = support_layout_position_for(item_id, default_rect)
+	control.size = default_rect.size
+	control.scale = support_layout_scale_for(item_id)
+	control.set_meta("support_layout_item_id", item_id)
+	control.set_meta("support_layout_default_position", default_rect.position)
+	control.set_meta("support_layout_default_scale", Vector2.ONE)
+	support_layout_groups[item_id] = control
+	return control
+
+
+func support_layout_apply_child_control(item_id: String, control: Control, default_rect: Rect2, parent_size: Vector2) -> Control:
+	var stored: Variant = support_layout_positions.get(item_id, default_rect.position)
+	var desired_position: Vector2 = stored if stored is Vector2 else default_rect.position
+	var scale := support_layout_scale_for(item_id)
+	var visual_size := default_rect.size * scale
+	control.position = Vector2(
+		clampf(desired_position.x, 0.0, maxf(0.0, parent_size.x - visual_size.x)),
+		clampf(desired_position.y, 0.0, maxf(0.0, parent_size.y - visual_size.y)))
+	control.size = default_rect.size
+	control.scale = scale
+	control.set_meta("support_layout_item_id", item_id)
+	control.set_meta("support_layout_default_position", default_rect.position)
+	control.set_meta("support_layout_default_scale", Vector2.ONE)
+	support_layout_groups[item_id] = control
+	return control
+
+
+func _load_support_layout() -> void:
+	support_layout_positions.clear()
+	support_layout_scales.clear()
+	if game == null or not game.settings is Dictionary:
+		return
+	var stored: Variant = game.settings.get("support_layout", {})
+	if not stored is Dictionary:
+		return
+	for item_id: String in SUPPORT_LAYOUT_ITEM_IDS:
+		var encoded: Variant = stored.get(item_id)
+		if not encoded is Array or encoded.size() != 4:
+			continue
+		if not (encoded[0] is int or encoded[0] is float) or not (encoded[1] is int or encoded[1] is float):
+			continue
+		if not (encoded[2] is int or encoded[2] is float) or not (encoded[3] is int or encoded[3] is float):
+			continue
+		if not is_finite(float(encoded[0])) or not is_finite(float(encoded[1])) or not is_finite(float(encoded[2])) or not is_finite(float(encoded[3])):
+			continue
+		support_layout_positions[item_id] = Vector2(float(encoded[0]), float(encoded[1]))
+		support_layout_scales[item_id] = Vector2(float(encoded[2]), float(encoded[3]))
+
+
+func _serialized_support_layout() -> Dictionary:
+	var output: Dictionary = {}
+	for item_id: String in SUPPORT_LAYOUT_ITEM_IDS:
+		var group: Control = support_layout_groups.get(item_id)
+		if group == null or not is_instance_valid(group):
+			continue
+		output[item_id] = [group.position.x, group.position.y, group.scale.x, group.scale.y]
+	return output
+
+
+func _sync_support_layout_to_runtime_settings() -> void:
+	if game != null and game.settings is Dictionary:
+		game.settings["support_layout"] = _serialized_support_layout()
+
+
+func save_support_layout() -> bool:
+	_sync_support_layout_to_runtime_settings()
+	return game != null and game.persist_profile()
+
+
+func show_support_layout_editor() -> void:
+	if not support_layout_editor_is_available():
+		return
+	var editor = HudLayoutEditorScript.new()
+	editor.name = "Support_LayoutEditor"
+	editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(editor)
+	var entries: Array = [
+		{"id": "title", "target": support_layout_groups.get("title"), "label": "TIÊU ĐỀ", "accent": CYAN, "default_position": SUPPORT_TITLE_RECT.position, "default_scale": Vector2.ONE},
+		{"id": "status", "target": support_layout_groups.get("status"), "label": "TRẠNG THÁI", "accent": CYAN, "default_position": SUPPORT_STATUS_RECT.position, "default_scale": Vector2.ONE},
+	]
+	for index in range(3):
+		var card_id := "card_%02d" % (index + 1)
+		var card_position := REWARD_CARD_ORIGIN + Vector2(index * (REWARD_CARD_SIZE.x + REWARD_CARD_GAP), 0.0)
+		entries.append({"id": card_id, "target": support_layout_groups.get(card_id), "label": "KHUNG CARD %02d" % (index + 1), "accent": CYAN, "default_position": card_position, "default_scale": Vector2.ONE})
+		entries.append({"id": "%s_icon" % card_id, "target": support_layout_groups.get("%s_icon" % card_id), "label": "ICON CARD %02d" % (index + 1), "accent": CYAN, "default_position": SUPPORT_CARD_ICON_RECT.position, "default_scale": Vector2.ONE, "global_canvas": true})
+		entries.append({"id": "%s_title" % card_id, "target": support_layout_groups.get("%s_title" % card_id), "label": "TÊN CARD %02d" % (index + 1), "accent": CYAN, "default_position": SUPPORT_CARD_TITLE_RECT.position, "default_scale": Vector2.ONE, "global_canvas": true})
+		entries.append({"id": "%s_description" % card_id, "target": support_layout_groups.get("%s_description" % card_id), "label": "MÔ TẢ CARD %02d" % (index + 1), "accent": CYAN, "default_position": SUPPORT_CARD_DESCRIPTION_RECT.position, "default_scale": Vector2.ONE, "global_canvas": true})
+	entries.append({"id": "back", "target": support_layout_groups.get("back"), "label": "TRỞ LẠI PHÒNG", "accent": CYAN, "default_position": SUPPORT_BACK_RECT.position, "default_scale": Vector2.ONE})
+	editor.configure(entries, font, bold, "CHỈNH TRẠM HỖ TRỢ · kéo card để di chuyển · icon/tên/mô tả có khung riêng · kéo cạnh/góc để đổi cỡ · F11: lưu · R: mặc định")
+	editor.item_changed.connect(_on_support_layout_item_changed)
+	support_layout_editor = editor
+	editor.set_editor_active(false)
+
+
+func support_layout_editor_is_available() -> bool:
+	return OS.is_debug_build() and game != null and not game.test_mode
+
+
+func _on_support_layout_item_changed(item_id: String, position: Vector2, scale: Vector2) -> void:
+	support_layout_positions[item_id] = position
+	support_layout_scales[item_id] = scale
+	_sync_support_layout_to_runtime_settings()
 
 func gameplay_weapon_model_path(weapon: Dictionary) -> String:
 	var model_path := str(weapon.get("model", ""))
@@ -797,7 +1882,164 @@ func refresh_settings_layout_metadata() -> void:
 		elif child is Button and child.has_meta("settings_art_rect"):
 			child.set_meta("settings_art_rect", Rect2(child.get_global_position(), child.size))
 
+
+func show_hud_layout_editor() -> void:
+	if not hud_layout_editor_is_available():
+		return
+	var editor = HudLayoutEditorScript.new()
+	editor.name = "Gameplay_HudLayoutEditor"
+	editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	editor.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(editor)
+	var entries: Array = [
+		{"id": "hp", "target": hud_layout_groups.get("hp"), "label": "HP", "accent": CORAL, "default_position": Vector2(84, 44), "default_scale": Vector2.ONE},
+		{"id": "shield", "target": hud_layout_groups.get("shield"), "label": "KHIÊN", "accent": CYAN, "default_position": Vector2(84, 62), "default_scale": Vector2.ONE},
+		{"id": "energy", "target": hud_layout_groups.get("energy"), "label": "MANA", "accent": Color("3478ff"), "default_position": Vector2(84, 80), "default_scale": Vector2.ONE},
+		{"id": "title", "target": hud_layout_groups.get("title"), "label": "TIÊU ĐỀ", "accent": CYAN, "default_position": hud_title_default_position, "default_scale": Vector2.ONE},
+		{"id": "weapon", "target": hud_layout_groups.get("weapon"), "label": "VŨ KHÍ", "accent": LED_PURPLE, "default_position": Vector2(838, 11), "default_scale": Vector2.ONE},
+		{"id": "pause", "target": hud_layout_groups.get("pause"), "label": "TẠM DỪNG", "accent": CYAN, "default_position": Vector2(1180, 6), "default_scale": Vector2.ONE},
+		{"id": "boss", "target": hud_layout_groups.get("boss"), "label": "BOSS", "accent": CORAL, "default_position": Vector2(384, 130), "default_scale": Vector2.ONE},
+	]
+	if game.controls != null:
+		for item_id: String in TOUCH_LAYOUT_ITEM_IDS:
+			var touch_target: Control = game.controls.touch_layout_target(item_id)
+			var default_rect: Rect2 = game.controls.touch_layout_default_rect(item_id)
+			entries.append({"id": item_id, "target": touch_target, "label": "NÚT %s" % item_id.to_upper(), "accent": CYAN, "default_position": default_rect.position, "default_scale": Vector2.ONE})
+	editor.configure(entries, font, bold, "CHỈNH HUD + NÚT CẢM ỨNG · kéo để di chuyển · kéo cạnh/góc để đổi cỡ · kích đúp để chỉnh riêng · kích đúp lại hiện tất cả · F8: lưu · R: mặc định")
+	editor.item_changed.connect(_on_hud_layout_item_changed)
+	hud_layout_editor = editor
+	editor.set_editor_active(false)
+
+
+func hud_layout_editor_is_available() -> bool:
+	return HUD_LAYOUT_EDITOR_ENABLED and OS.is_debug_build() and game != null and not game.test_mode
+
+
+func _on_hud_layout_item_changed(item_id: String, position: Vector2, scale: Vector2) -> void:
+	if TOUCH_LAYOUT_ITEM_IDS.has(item_id):
+		if game != null and game.controls != null:
+			game.controls.apply_touch_layout_transform(item_id, position, scale)
+		return
+	hud_layout_positions[item_id] = position
+	hud_layout_scales[item_id] = scale
+	if item_id == "title":
+		var title_group: Control = hud_layout_groups.get("title")
+		if title_group != null:
+			hud_title_anchor = position + Vector2(title_group.size.x * scale.x * 0.5, title_group.size.y * scale.y * 0.5)
+			hud_title_anchor_valid = true
+	_sync_hud_layout_to_runtime_settings()
+
+
+func show_armory_layout_editor(entries: Array) -> void:
+	if not armory_layout_editor_is_available():
+		return
+	var editor = HudLayoutEditorScript.new()
+	editor.name = "Armory_LayoutEditor"
+	editor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(editor)
+	editor.configure(entries, font, bold, "CHỈNH KHO VŨ KHÍ · kéo thành phần để di chuyển · kéo cạnh/góc để đổi cỡ · kích đúp để chỉnh riêng · kích đúp lại hiện tất cả · F9: lưu · R: mặc định")
+	editor.item_changed.connect(_on_armory_layout_item_changed)
+	armory_layout_editor = editor
+	editor.set_editor_active(false)
+
+
+func armory_layout_editor_is_available() -> bool:
+	return ARMORY_LAYOUT_EDITOR_ENABLED and OS.is_debug_build() and game != null and not game.test_mode
+
+
+func _on_armory_layout_item_changed(item_id: String, position: Vector2, scale: Vector2) -> void:
+	armory_layout_positions[item_id] = position
+	armory_layout_scales[item_id] = scale
+	_sync_armory_layout_to_runtime_settings()
+
 func _unhandled_input(event: InputEvent) -> void:
+	if game != null and game.state == "playing" and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F11:
+		if reward_layout_editor_is_available():
+			show_reward_layout_preview()
+			get_viewport().set_input_as_handled()
+		return
+	if game != null and game.state == "reward" and reward_layout_editor != null and is_instance_valid(reward_layout_editor) and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_F11:
+			if reward_layout_editor.is_editor_active():
+				if save_reward_layout():
+					reward_layout_editor.set_editor_active(false)
+					if reward_layout_preview_active:
+						close_reward_layout_preview()
+				else:
+					game.flash_text("CHƯA LƯU ĐƯỢC BỐ CỤC NÂNG CẤP", CORAL)
+			else:
+				reward_layout_editor.set_editor_active(true)
+				overlay.move_child(reward_layout_editor, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_R and reward_layout_editor.is_editor_active():
+			reward_layout_editor.reset_layout()
+			get_viewport().set_input_as_handled()
+			return
+	if game != null and game.state == "shop" and support_layout_editor != null and is_instance_valid(support_layout_editor) and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_F11:
+			if support_layout_editor.is_editor_active():
+				if save_support_layout():
+					support_layout_editor.set_editor_active(false)
+				else:
+					game.flash_text("CHƯA LƯU ĐƯỢC BỐ CỤC TRẠM HỖ TRỢ", CORAL)
+			else:
+				support_layout_editor.set_editor_active(true)
+				overlay.move_child(support_layout_editor, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_R and support_layout_editor.is_editor_active():
+			support_layout_editor.reset_layout()
+			get_viewport().set_input_as_handled()
+			return
+	if game != null and game.state == "paused" and pause_layout_editor != null and is_instance_valid(pause_layout_editor) and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_F10:
+			if pause_layout_editor.is_editor_active():
+				if save_pause_layout():
+					pause_layout_editor.set_editor_active(false)
+				else:
+					game.flash_text("CHƯA LƯU ĐƯỢC BỐ CỤC TẠM DỪNG", CORAL)
+			else:
+				pause_layout_editor.set_editor_active(true)
+				overlay.move_child(pause_layout_editor, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_R and pause_layout_editor.is_editor_active():
+			pause_layout_editor.reset_layout()
+			get_viewport().set_input_as_handled()
+			return
+	if game != null and game.state == "playing" and hud_layout_editor != null and is_instance_valid(hud_layout_editor) and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_F8:
+			if hud_layout_editor.is_editor_active():
+				if save_hud_layout():
+					hud_layout_editor.set_editor_active(false)
+				else:
+					game.flash_text("CHƯA LƯU ĐƯỢC BỐ CỤC HUD", CORAL)
+			else:
+				hud_layout_editor.set_editor_active(true)
+				root.move_child(hud_layout_editor, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_R and hud_layout_editor.is_editor_active():
+			hud_layout_editor.reset_layout()
+			get_viewport().set_input_as_handled()
+			return
+	if game != null and game.state == "unlocks" and armory_layout_editor != null and is_instance_valid(armory_layout_editor) and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_F9:
+			if armory_layout_editor.is_editor_active():
+				if save_armory_layout():
+					armory_layout_editor.set_editor_active(false)
+				else:
+					game.flash_text("CHƯA LƯU ĐƯỢC BỐ CỤC KHO VŨ KHÍ", CORAL)
+			else:
+				armory_layout_editor.set_editor_active(true)
+				overlay.move_child(armory_layout_editor, -1)
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_R and armory_layout_editor.is_editor_active():
+			armory_layout_editor.reset_layout()
+			get_viewport().set_input_as_handled()
+			return
 	if game == null or game.state != "settings" or settings_layout_editor == null or not is_instance_valid(settings_layout_editor):
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
@@ -849,14 +2091,14 @@ func setting_slider(parent: Node, key: String, name_text: String, minimum: float
 	var shell := settings_control_shell(parent, key, row_rect, accent)
 	var current_value_text := settings_value_text(float(game.settings[key]), multiplier, suffix)
 	var value_rect := settings_value_rect(current_value_text, shell.size.x)
-	var name_label := label(shell, name_text, Rect2(16, 7, value_rect.position.x - 24.0, 25), 20, WHITE)
+	var name_label := label(shell, name_text, Rect2(16, 7, value_rect.position.x - 24.0, 25), 20, accent)
 	name_label.name = "Settings_%s_Label" % key
 	name_label.add_theme_color_override("font_outline_color", Color(accent.r, accent.g, accent.b, 0.22))
 	name_label.add_theme_constant_override("outline_size", 1)
 	var value_chip := settings_value_chip(shell, value_rect, accent)
 	value_chip.name = "Settings_%s_ValueChip" % key
 	value_chip.set_meta("settings_value_chip_key", key)
-	var value_label := label(shell, current_value_text, value_rect, 18, WHITE)
+	var value_label := label(shell, current_value_text, value_rect, 18, accent)
 	value_label.name = "Settings_%s_Value" % key
 	value_label.set_meta("settings_value_key", key)
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -966,7 +2208,7 @@ func apply_toggle_visual(check: Button, active: bool, accent: Color) -> void:
 	check.add_theme_stylebox_override("hover", component_style)
 	check.add_theme_stylebox_override("pressed", component_style)
 	check.add_theme_stylebox_override("focus", component_style)
-	var text_color = accent if active else WHITE
+	var text_color: Color = accent
 	check.add_theme_color_override("font_color", text_color)
 	check.add_theme_color_override("font_hover_color", text_color)
 	check.add_theme_color_override("font_pressed_color", text_color)
@@ -1000,6 +2242,7 @@ func settings_save_action(parent: Node, rect: Rect2) -> Button:
 	target.focus_mode = Control.FOCUS_ALL
 	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	target.flat = false
+	target.add_theme_font_override("font", bold)
 	target.set_meta("settings_action_id", "save_and_return")
 	var component_style := panel_style(Color(0.004, 0.009, 0.025, 0.88), Color(CYAN.r, CYAN.g, CYAN.b, 0.82), 1)
 	component_style.set_corner_radius_all(7)
@@ -1050,8 +2293,12 @@ func show_unlocks() -> void:
 	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(veil)
-	var title = led_label(overlay, "KHO VŨ KHÍ", Rect2(64, 36, 480, 58), 42, Color("d9fbff"), true)
+	var armory_entries: Array = []
+	var title_rect := Rect2(64, 36, 480, 58)
+	var title = plain_label(overlay, "KHO VŨ KHÍ", title_rect, 42, CYAN, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	armory_layout_apply_control("title", title, title_rect)
+	armory_entries.append({"id": "title", "target": title, "label": "TIÊU ĐỀ", "accent": CYAN, "default_position": title_rect.position, "default_scale": Vector2.ONE})
 	accent_rule(overlay, Rect2(64, 117, 426, 2), Color(CYAN.r, CYAN.g, CYAN.b, 0.74))
 	var first_action: Button
 	for i in range(game.content.weapons.size()):
@@ -1065,7 +2312,7 @@ func show_unlocks() -> void:
 		var selected: bool = unlocked and weapon.id == game.starter
 		var state: int = armory_loadout_state(fixed_primary, selected, unlocked)
 		var can_activate: bool = not fixed_primary and not selected and (unlocked or int(game.profile.meta.shards) >= 8)
-		var accent: Color = LED_PURPLE if selected else (Color("b5f7ff") if fixed_primary else (CYAN if unlocked else Color("756b91")))
+		var accent: Color = LED_PURPLE if selected else (CYAN if fixed_primary else (CYAN if unlocked else Color("756b91")))
 		var state_visual = WeaponLoadoutStateScript.new()
 		state_visual.name = "ArmoryState_%s" % weapon.id
 		state_visual.position = card_position
@@ -1073,12 +2320,20 @@ func show_unlocks() -> void:
 		state_visual.set_meta("armory_weapon_id", weapon.id)
 		state_visual.configure(state, str(weapon.id), can_activate)
 		overlay.add_child(state_visual)
-		armory_weapon_details(weapon, i, card_position, accent)
+		var details: Dictionary = armory_weapon_details(weapon, i, card_position, accent)
+		var stt_rect := Rect2(card_position + Vector2(15, 10), Vector2(34, 17))
+		var name_rect := Rect2(card_position + Vector2(92, 18), Vector2(154, 23))
+		armory_entries.append({"id": "%s_stt" % weapon.id, "target": details.get("stt"), "label": "%02d · STT" % (i + 1), "accent": accent, "default_position": stt_rect.position, "default_scale": Vector2.ONE})
+		armory_entries.append({"id": "%s_name" % weapon.id, "target": details.get("name"), "label": "%02d · TÊN" % (i + 1), "accent": CYAN, "default_position": name_rect.position, "default_scale": Vector2.ONE})
 		var action: Callable = func(): game.select_starter(weapon.id) if unlocked else game.unlock_weapon(weapon.id)
-		var weapon_button := armory_weapon_hitbox(str(weapon.id), str(weapon.name), card_rect, action, can_activate, state_visual)
+		armory_weapon_hitbox(str(weapon.id), str(weapon.name), card_rect, action, can_activate, state_visual)
+		var action_rect := armory_action_rect(card_rect)
+		var action_button := armory_weapon_action_button(str(weapon.id), armory_loadout_text(state), action_rect, action, can_activate, accent, state_visual)
+		armory_entries.append({"id": "%s_action" % weapon.id, "target": action_button, "label": "%02d · TRANG BỊ" % (i + 1), "accent": accent, "default_position": action_rect.position, "default_scale": Vector2.ONE})
 		if first_action == null and can_activate:
-			first_action = weapon_button
+			first_action = action_button
 	var return_button := armory_return_button()
+	show_armory_layout_editor(armory_entries)
 	if first_action != null:
 		first_action.grab_focus()
 	else:
@@ -1093,15 +2348,78 @@ func armory_loadout_state(fixed_primary: bool, selected: bool, unlocked: bool) -
 		return WeaponLoadoutStateScript.State.AVAILABLE
 	return WeaponLoadoutStateScript.State.LOCKED
 
-func armory_weapon_details(weapon: Dictionary, index: int, card_position: Vector2, accent: Color) -> void:
-	label(overlay, "%02d" % (index + 1), Rect2(card_position + Vector2(15, 10), Vector2(34, 17)), 11, accent, true)
+func armory_loadout_text(state: int) -> String:
+	match state:
+		WeaponLoadoutStateScript.State.AVAILABLE:
+			return "CHỌN TRANG BỊ"
+		WeaponLoadoutStateScript.State.EQUIPPED:
+			return "ĐANG TRANG BỊ"
+		WeaponLoadoutStateScript.State.FIXED:
+			return "MẶC ĐỊNH"
+		_:
+			return "MỞ KHÓA · 8 MẢNH"
+
+
+func armory_weapon_details(weapon: Dictionary, index: int, card_position: Vector2, accent: Color) -> Dictionary:
+	var stt_rect := Rect2(card_position + Vector2(15, 10), Vector2(34, 17))
+	var stt_label := label(overlay, "%02d" % (index + 1), stt_rect, 11, accent, true)
+	stt_label.name = "Armory_%s_STT" % weapon.id
+	armory_layout_apply_control("%s_stt" % weapon.id, stt_label, stt_rect)
 	var model_path := gameplay_weapon_model_path(weapon)
 	var model_preview := texture(overlay, model_path, Rect2(card_position + ARMORY_MODEL_PREVIEW_ORIGIN, ARMORY_MODEL_PREVIEW_SIZE))
 	model_preview.name = "Armory_%s_GameplayModel" % weapon.id
 	model_preview.set_meta("armory_weapon_model_id", str(weapon.id))
 	model_preview.set_meta("armory_weapon_model_path", model_path)
-	var name_label = label(overlay, str(weapon.name), Rect2(card_position + Vector2(92, 18), Vector2(154, 23)), 15, WHITE, true)
+	var name_rect := Rect2(card_position + Vector2(92, 18), Vector2(154, 23))
+	var name_label := label(overlay, str(weapon.name), name_rect, 15, CYAN, true)
+	name_label.name = "Armory_%s_WeaponName" % weapon.id
 	name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	armory_layout_apply_control("%s_name" % weapon.id, name_label, name_rect)
+	return {"stt": stt_label, "name": name_label}
+
+
+func armory_action_rect(card_rect: Rect2) -> Rect2:
+	var dock_width := maxf(144.0, card_rect.size.x * 0.60)
+	return Rect2(card_rect.position + Vector2(card_rect.size.x - dock_width - 18.0, card_rect.size.y - 39.0), Vector2(dock_width, 30.0))
+
+
+func armory_weapon_action_button(action_id: String, action_text: String, action_rect: Rect2, action: Callable, can_activate: bool, accent: Color, state_visual) -> Button:
+	var target := Button.new()
+	target.name = "Armory_%s_ActionButton" % action_id
+	target.text = action_text
+	target.tooltip_text = action_text
+	target.focus_mode = Control.FOCUS_ALL
+	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	target.flat = true
+	target.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target.disabled = not can_activate
+	target.add_theme_font_override("font", bold)
+	target.add_theme_font_size_override("font_size", 11)
+	var transparent := StyleBoxEmpty.new()
+	target.add_theme_stylebox_override("normal", transparent)
+	target.add_theme_stylebox_override("disabled", transparent)
+	target.add_theme_stylebox_override("hover", transparent)
+	target.add_theme_stylebox_override("focus", transparent)
+	target.add_theme_stylebox_override("pressed", menu_hitbox_style(accent, 0.08, 1))
+	target.add_theme_color_override("font_color", accent)
+	target.add_theme_color_override("font_hover_color", accent)
+	target.add_theme_color_override("font_pressed_color", accent)
+	target.add_theme_color_override("font_focus_color", accent)
+	target.add_theme_color_override("font_disabled_color", Color(accent.r, accent.g, accent.b, 0.56))
+	target.set_meta("armory_equip_weapon_id", action_id)
+	target.set_meta("armory_action_rect", action_rect)
+	armory_layout_apply_control("%s_action" % action_id, target, action_rect)
+	target.pressed.connect(action)
+	target.button_down.connect(func(): state_visual.set_interaction_feedback(true))
+	target.button_up.connect(func(): state_visual.set_interaction_feedback(false))
+	overlay.add_child(target)
+	# Button's theme minimum height can expand a 30px dock when it enters the
+	# tree. Restore the authored dock size after that theme pass so the editor
+	# resizes the same visible region as the card artwork.
+	target.set_deferred("size", action_rect.size)
+	if state_visual.state_label != null:
+		state_visual.state_label.visible = false
+	return target
 
 func armory_weapon_hitbox(action_id: String, weapon_name: String, card_rect: Rect2, action: Callable, can_activate: bool, state_visual) -> Button:
 	var target = Button.new()
@@ -1110,7 +2428,7 @@ func armory_weapon_hitbox(action_id: String, weapon_name: String, card_rect: Rec
 	target.tooltip_text = weapon_name
 	target.position = card_rect.position
 	target.size = card_rect.size
-	target.focus_mode = Control.FOCUS_ALL
+	target.focus_mode = Control.FOCUS_NONE
 	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	target.flat = true
 	target.disabled = not can_activate
@@ -1139,13 +2457,15 @@ func armory_weapon_hitbox(action_id: String, weapon_name: String, card_rect: Rec
 func armory_return_button() -> Button:
 	var target = Button.new()
 	target.name = "Armory_Return_Hitbox"
-	target.text = "‹  TRỞ LẠI MENU"
+	target.text = "TRỞ LẠI MENU"
 	target.tooltip_text = "Trở lại menu"
 	target.position = ARMORY_RETURN_RECT.position
 	target.size = ARMORY_RETURN_RECT.size
 	target.focus_mode = Control.FOCUS_ALL
 	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	target.flat = true
+	target.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target.add_theme_font_override("font", bold)
 	var transparent = StyleBoxEmpty.new()
 	target.add_theme_stylebox_override("normal", transparent)
 	target.add_theme_stylebox_override("hover", menu_hitbox_style(CYAN, 0.06, 2))

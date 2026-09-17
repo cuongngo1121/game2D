@@ -102,6 +102,20 @@
         "echo_runner_overhead_hurt_2.png"
       ]
     },
+    "pulse": {
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "strip": "echo_runner_overhead_pulse_6x32.png",
+      "files": [
+        "echo_runner_overhead_pulse_0.png",
+        "echo_runner_overhead_pulse_1.png",
+        "echo_runner_overhead_pulse_2.png",
+        "echo_runner_overhead_pulse_3.png",
+        "echo_runner_overhead_pulse_4.png",
+        "echo_runner_overhead_pulse_5.png"
+      ]
+    },
     "death": {
       "frames": 6,
       "fps": 8,
