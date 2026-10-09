@@ -245,3 +245,4 @@ Không có nội dung mạng hay engine phụ. Mã gameplay dùng các module ri
 Đây là bản playable đầu tiên có toàn bộ tuyến năm khu vực, không phải bản đã được playtest và chứng nhận phát hành. Phần player hiện dùng pixel-art 32×32 với animation idle/run/attack/dash/hurt/death; các sprite SVG procedural cũ vẫn được dùng cho fallback và các asset khác. Nhạc gồm loop điện tử bốn ô nhịp với các lớp liên kết, có thể lặp rõ khi chơi lâu. Chưa có cân bằng qua người chơi thật để xác minh thời lượng 25–40 phút, độ công bằng của mọi tổ hợp seed và chất lượng điều khiển trên nhiều kích thước điện thoại.
 
 Chưa đo 60 FPS, độ trễ âm thanh, rung, đa chạm vật lý, camera khuyết, khóa màn hình hoặc khôi phục sau hệ điều hành kill trên Android thật. Kiểm thử tiến trình dùng sát thương điều khiển để xác nhận state machine; không thay thế một lượt thắng bằng kỹ năng của người chơi. Không tuyên bố APK đã cài trên điện thoại nếu chưa có bằng chứng trong báo cáo.
+# game2D
