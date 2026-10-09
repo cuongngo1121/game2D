@@ -2,6 +2,7 @@ extends Node2D
 ## The composition root owns flow; actors, patterns, input, audio and persistence are separate.
 
 const PlayerScript = preload("res://scripts/player/player.gd")
+const DroneScript = preload("res://scripts/player/companion_drone.gd")
 const WeaponScript = preload("res://scripts/player/weapon_system.gd")
 const InputScript = preload("res://scripts/player/touch_controls.gd")
 const RoomScript = preload("res://scripts/world/room_view.gd")
@@ -29,6 +30,9 @@ var profile: Dictionary = {}
 var settings: Dictionary = {}
 var store
 var player
+var companion_drone
+var has_drone: bool = false
+var selected_drone: String = ""
 var weapon_system
 var controls
 var room_view
@@ -174,8 +178,9 @@ var seed_value: int = 0
 var graph: Dictionary = {}
 var cleared: Array = []
 var rewarded: Array = []
-var weapons: Array = ["pistol", "smg"]
+var weapons: Array = ["pistol"]
 var active_slot: int = 0
+var damage_numbers: Array = []
 var upgrades: Dictionary = {}
 var coins: int = 0
 var elapsed: float = 0
@@ -192,7 +197,7 @@ var support_purchased: bool = false
 var pending_reward: Array = []
 var end_recorded: bool = false
 var save_error: String = ""
-var starter: String = "smg"
+var starter: String = "pistol"
 var test_mode: bool = false
 var debug_session: bool = false
 # Map-tour is narrower than the general temporary debug-session guard. It is
@@ -240,6 +245,9 @@ func _ready() -> void:
 	profile = store.load_profile()
 	settings = profile.settings
 	starter = str(profile.meta.get("starter", starter))
+	coins = int(profile.meta.get("coins", 0))
+	selected_drone = str(profile.meta.get("selected_drone", ""))
+	has_drone = (selected_drone != "") or bool(profile.meta.get("has_drone", false))
 	var debug_content_changed := unlock_debug_test_content()
 	audio = AudioScript.new()
 	add_child(audio)
@@ -267,6 +275,11 @@ func _ready() -> void:
 	player.setup(self)
 	player.position = Vector2(1010, 359)
 	player.visible = false
+	companion_drone = DroneScript.new()
+	world.add_child(companion_drone)
+	companion_drone.setup(self, player)
+	companion_drone.enabled = false
+	companion_drone.visible = false
 	weapon_system = WeaponScript.new()
 	weapon_system.setup(self)
 	var effects_view = preload("res://scripts/world/effects_view.gd").new()
@@ -298,6 +311,8 @@ func _physics_process(delta: float) -> void:
 		return
 	elapsed += delta
 	player.update(delta)
+	if companion_drone != null:
+		companion_drone.update(delta)
 	if is_open_route_stage() and not combat_active:
 		update_route_exploration()
 	if not combat_active:
@@ -306,6 +321,7 @@ func _physics_process(delta: float) -> void:
 	enemies.update(delta)
 	projectiles.update(delta)
 	update_pickups(delta)
+	_update_damage_numbers(delta)
 	update_assignment_demo(delta)
 	if combat_active and enemies.living_count() == 0:
 		room_clear_wait += delta
@@ -383,7 +399,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.physical_keycode == KEY_T:
 		if trigger_debug_boss_exit_portal_preview():
 			get_viewport().set_input_as_handled()
-		return
+			return
 	if event.physical_keycode == KEY_U:
 		if trigger_debug_boss_combat_preview():
 			get_viewport().set_input_as_handled()
@@ -411,6 +427,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		flash_text("VIỀN MAP: BẬT" if show_route_boundaries else "VIỀN MAP: TẮT", Color("35e7ff"))
 		get_viewport().set_input_as_handled()
 		return
+	if event.physical_keycode == KEY_B and not boundary_editor.active:
+		if state == "shop":
+			resume_game()
+			get_viewport().set_input_as_handled()
+			return
+		elif state == "playing":
+			open_cyber_shop()
+			get_viewport().set_input_as_handled()
+			return
+	if event.physical_keycode == KEY_ESCAPE and state == "shop":
+		resume_game()
+		get_viewport().set_input_as_handled()
+		return
+	if event.physical_keycode == KEY_T and state == "playing" and not boundary_editor.active:
+		if not has_drone:
+			flash_text("BẠN CHƯA SỞ HỮU DRONE! HÃY MUA TẠI CỬA HÀNG [B]", Color("ff846f"))
+			get_viewport().set_input_as_handled()
+			return
+		if companion_drone != null:
+			companion_drone.enabled = not companion_drone.enabled
+			flash_text("DRONE TRỢ CHIẾN: BẬT" if companion_drone.enabled else "DRONE TRỢ CHIẾN: TẮT", Color("35e7ff"))
+			get_viewport().set_input_as_handled()
+			return
 	if boundary_editor.active and boundary_editor.handle_key(event):
 		get_viewport().set_input_as_handled()
 
@@ -434,10 +473,8 @@ func unlock_debug_test_content() -> bool:
 		if not profile.meta.unlocked.has(id):
 			profile.meta.unlocked.append(id)
 			changed = true
-	# Pulse Pistol is permanently kept in slot 1 as the zero-energy fallback;
-	# selecting it as the starter would create a duplicate two-pistol loadout.
-	if starter == "pistol" or not profile.meta.unlocked.has(starter):
-		starter = "smg" if profile.meta.unlocked.has("smg") else str(profile.meta.unlocked[0])
+	if not profile.meta.unlocked.has(starter):
+		starter = "pistol" if profile.meta.unlocked.has("pistol") else str(profile.meta.unlocked[0])
 	if profile.meta.get("starter", "") != starter:
 		profile.meta.starter = starter
 		changed = true
@@ -482,9 +519,19 @@ func new_run(chosen_seed: int = 0, is_debug_session: bool = false, enable_debug_
 		# The demo owns its own recurring enemy set, so entering the room must not
 		# auto-start an authored campaign wave before the setup below runs.
 		cleared.append(0)
-	weapons = ["pistol", starter]
-	active_slot = 1
+	weapons = [starter]
+	active_slot = 0
 	end_recorded = false
+	selected_drone = str(profile.meta.get("selected_drone", ""))
+	has_drone = (selected_drone != "") or bool(profile.meta.get("has_drone", false))
+	if has_drone and selected_drone == "":
+		selected_drone = "plasma"
+	if companion_drone != null:
+		companion_drone.enabled = has_drone
+		companion_drone.visible = has_drone
+		if has_drone:
+			companion_drone.set_drone_type(selected_drone)
+			companion_drone.reset_position()
 	player.hp = 100
 	player.refresh_stats()
 	player.shield = player.max_shield
@@ -595,7 +642,7 @@ func setup_assignment_demo() -> void:
 	assignment_emp_cooldown = 0.0
 	assignment_speed_boost_time = 0.0
 	assignment_slow_time = 0.0
-	weapons = ["pistol", "glitch"]
+	weapons = ["glitch"]
 	active_slot = 0
 	weapon_system.reset()
 	player.position = room_entry_position(0)
@@ -605,6 +652,8 @@ func setup_assignment_demo() -> void:
 	player.resonance = 100.0
 	player.invulnerable = 1.2
 	player.reset_visual_animation()
+	if companion_drone != null:
+		companion_drone.reset_position()
 	combat_active = true
 	spawn_assignment_demo_enemies()
 	audio.request_intensity("combat")
@@ -818,6 +867,20 @@ func continue_run() -> void:
 	rewarded = rewarded.map(func(value): return int(value))
 	weapons = checkpoint.weapons.duplicate()
 	upgrades = checkpoint.upgrades.duplicate()
+	selected_drone = str(checkpoint.get("selected_drone", profile.meta.get("selected_drone", "")))
+	has_drone = bool(checkpoint.get("has_drone", profile.meta.get("has_drone", false)))
+	if selected_drone == "" and int(upgrades.get("drone", 0)) > 0:
+		has_drone = true
+	if has_drone and selected_drone == "":
+		selected_drone = "plasma"
+	profile.meta["selected_drone"] = selected_drone
+	profile.meta["has_drone"] = has_drone
+	if companion_drone != null:
+		companion_drone.enabled = has_drone
+		companion_drone.visible = has_drone
+		if has_drone:
+			companion_drone.set_drone_type(selected_drone)
+			companion_drone.reset_position()
 	active_slot = clampi(int(checkpoint.get("active_slot", 0)), 0, weapons.size() - 1)
 	coins = int(checkpoint.coins)
 	elapsed = float(checkpoint.elapsed)
@@ -858,6 +921,9 @@ func enter_room(index: int, preserve_player_position: bool = false) -> void:
 	configure_map_layout()
 	if not preserve_player_position:
 		player.position = room_entry_position(index)
+	if companion_drone != null:
+		companion_drone.reset_position()
+		companion_drone.visible = has_drone and player.visible
 	player.configure_follow_camera(arena)
 	var stage: Dictionary = content.stages[stage_index]
 	var rectangles: Array = []
@@ -1609,6 +1675,8 @@ func complete_room() -> void:
 		show_reward()
 	else:
 		save_checkpoint()
+		if not test_mode:
+			open_cyber_shop()
 
 func _complete_debug_combat() -> void:
 	var completed_room := room_index
@@ -1675,6 +1743,9 @@ func choose_upgrade(id: String) -> void:
 	rhythm.resume_music()
 	var safe_room_hint := "Phòng an toàn · Đi tới vùng đã mở hoặc mở bản đồ" if is_open_route_stage() else "Phòng an toàn · Đến cửa sáng hoặc mở bản đồ"
 	flash_text(safe_room_hint, Color("35e7ff"))
+	if test_mode:
+		return
+	open_cyber_shop()
 
 func support_offers() -> Array:
 	var offers: Array = []
@@ -1723,6 +1794,144 @@ func heal_support() -> void:
 	audio.play_sfx("pickup")
 	save_checkpoint()
 	resume_game()
+
+func open_cyber_shop() -> void:
+	if state == "shop":
+		resume_game()
+		return
+	if state != "playing":
+		return
+	if combat_active:
+		flash_text("KHÔNG THỂ MỞ CỬA HÀNG KHI ĐANG GIAO TRANH!", Color("ff846f"))
+		return
+	state = "shop"
+	controls.reset()
+	rhythm.pause_music()
+	ui.show_cyber_shop()
+
+func buy_drone_companion() -> bool:
+	if profile.meta.has("unlocked_drones") and profile.meta.unlocked_drones.has("plasma"):
+		flash_text("BẠN ĐÃ SỞ HỮU DRONE RỒI!", Color("35e7ff"))
+		return false
+	return unlock_drone("plasma")
+
+func buy_drone_overclock() -> bool:
+	if not has_drone and int(upgrades.get("drone", 0)) == 0:
+		flash_text("CẦN MUA DRONE TRƯỚC TIÊN!", Color("ff846f"))
+		return false
+	var current_lvl: int = int(upgrades.get("drone_overclock", 0))
+	if current_lvl >= 3:
+		flash_text("DRONE ĐÃ ĐẠT CẤP ĐỘ TỐI ĐA!", Color("35e7ff"))
+		return false
+	const PRICE := 45
+	if coins < PRICE:
+		flash_text("Cần thêm %d coin!" % (PRICE - coins), Color("ff846f"))
+		return false
+	coins -= PRICE
+	upgrades["drone_overclock"] = current_lvl + 1
+	audio.play_sfx("buy")
+	flash_text("DRONE ĐÃ NÂNG CẤP LÊN CẤP %d!" % (current_lvl + 1), Color("35e7ff"))
+	save_checkpoint()
+	return true
+
+func buy_heal_hp() -> bool:
+	if player.hp >= player.max_hp:
+		flash_text("MÁU ĐÃ ĐẦY!", Color("35e7ff"))
+		return false
+	const PRICE := 20
+	if coins < PRICE:
+		flash_text("Cần thêm %d coin để hồi máu!" % (PRICE - coins), Color("ff846f"))
+		return false
+	coins -= PRICE
+	player.hp = minf(player.max_hp, player.hp + 45.0)
+	audio.play_sfx("pickup")
+	flash_text("ĐÃ HỒI 45 MÁU!", Color("35e7ff"))
+	return true
+
+func buy_max_hp_upgrade() -> bool:
+	var lvl: int = int(upgrades.get("health", 0))
+	if lvl >= 5:
+		flash_text("MÁU TỐI ĐA ĐÃ ĐẠT GIỚI HẠN!", Color("35e7ff"))
+		return false
+	var price: int = 35 + lvl * 10
+	if coins < price:
+		flash_text("Cần thêm %d coin!" % (price - coins), Color("ff846f"))
+		return false
+	coins -= price
+	upgrades["health"] = lvl + 1
+	player.refresh_stats()
+	player.hp = minf(player.max_hp, player.hp + 25.0)
+	audio.play_sfx("buy")
+	flash_text("+25 MÁU TỐI ĐA! (Tổng: %d)" % int(player.max_hp), Color("35e7ff"))
+	save_checkpoint()
+	return true
+
+func buy_max_shield_upgrade() -> bool:
+	var lvl: int = int(upgrades.get("shield", 0))
+	if lvl >= 5:
+		flash_text("KHIÊN ĐÃ ĐẠT GIỚI HẠN!", Color("35e7ff"))
+		return false
+	var price: int = 30 + lvl * 10
+	if coins < price:
+		flash_text("Cần thêm %d coin!" % (price - coins), Color("ff846f"))
+		return false
+	coins -= price
+	upgrades["shield"] = lvl + 1
+	player.refresh_stats()
+	player.shield = player.max_shield
+	audio.play_sfx("buy")
+	flash_text("+20 KHIÊN TỐI ĐA! (Tổng: %d)" % int(player.max_shield), Color("35e7ff"))
+	save_checkpoint()
+	return true
+
+func buy_damage_upgrade() -> bool:
+	var lvl: int = int(upgrades.get("damage", 0))
+	if lvl >= 5:
+		flash_text("SÁT THƯƠNG ĐÃ ĐẠT GIỚI HẠN!", Color("35e7ff"))
+		return false
+	var price: int = 40 + lvl * 15
+	if coins < price:
+		flash_text("Cần thêm %d coin!" % (price - coins), Color("ff846f"))
+		return false
+	coins -= price
+	upgrades["damage"] = lvl + 1
+	audio.play_sfx("buy")
+	flash_text("+15%% SÁT THƯƠNG VŨ KHÍ! (Cấp %d)" % (lvl + 1), Color("35e7ff"))
+	save_checkpoint()
+	return true
+
+func buy_magnet_upgrade() -> bool:
+	var lvl: int = int(upgrades.get("magnet", 0))
+	if lvl >= 3:
+		flash_text("NAM CHÂM ĐÃ ĐẠT GIỚI HẠN!", Color("35e7ff"))
+		return false
+	const PRICE := 25
+	if coins < PRICE:
+		flash_text("Cần thêm %d coin!" % (PRICE - coins), Color("ff846f"))
+		return false
+	coins -= PRICE
+	upgrades["magnet"] = lvl + 1
+	audio.play_sfx("buy")
+	flash_text("TĂNG BÁN KÍNH HÚT VẬT PHẨM! (Cấp %d)" % (lvl + 1), Color("35e7ff"))
+	save_checkpoint()
+	return true
+
+func buy_speed_upgrade() -> bool:
+	var lvl: int = int(upgrades.get("speed", 0))
+	if lvl >= 3:
+		flash_text("TỐC ĐỘ ĐÃ ĐẠT GIỚI HẠN!", Color("35e7ff"))
+		return false
+	const PRICE := 30
+	if coins < PRICE:
+		flash_text("Cần thêm %d coin!" % (PRICE - coins), Color("ff846f"))
+		return false
+	coins -= PRICE
+	upgrades["speed"] = lvl + 1
+	player.refresh_stats()
+	audio.play_sfx("buy")
+	flash_text("+23 PX/S TỐC ĐỘ CHẠY! (Cấp %d)" % (lvl + 1), Color("35e7ff"))
+	save_checkpoint()
+	return true
 
 func nearest_portal() -> Dictionary:
 	var nearest: Dictionary = {}
@@ -2021,6 +2230,8 @@ func return_to_menu() -> void:
 	ui.show_menu()
 
 func swap_weapon() -> void:
+	if weapons.size() <= 1:
+		return
 	active_slot = (active_slot + 1) % weapons.size()
 	weapon_system.cooldown = maxf(weapon_system.cooldown, 0.12)
 	flash_text(weapon_system.definition(weapons[active_slot]).name, Color("35e7ff"))
@@ -2035,13 +2246,19 @@ func save_checkpoint() -> bool:
 	profile.checkpoint = {"seed": seed_value, "stage": stage_index, "room": room_index,
 		"cleared": cleared.duplicate(), "rewarded": rewarded.duplicate(), "player": player.snapshot(),
 		"coins": coins, "upgrades": upgrades.duplicate(), "weapons": weapons.duplicate(), "elapsed": elapsed,
-		"active_slot": active_slot, "run_kills": run_kills, "perfect_count": perfect_count, "starter": starter}
+		"active_slot": active_slot, "run_kills": run_kills, "perfect_count": perfect_count, "starter": starter,
+		"has_drone": has_drone, "selected_drone": selected_drone}
 	return persist_profile()
 
 func persist_profile() -> bool:
 	if test_mode:
 		return true
 	profile.settings = settings
+	if not profile.has("meta") or not profile["meta"] is Dictionary:
+		profile["meta"] = {}
+	profile.meta["coins"] = coins
+	profile.meta["has_drone"] = has_drone
+	profile.meta["selected_drone"] = selected_drone
 	var success: bool = store.save_profile(profile)
 	if not success:
 		save_error = "Chưa lưu được. Kiểm tra dung lượng bộ nhớ."
@@ -2074,25 +2291,130 @@ func end_run(victory: bool) -> void:
 	ui.show_result(victory)
 
 func unlock_weapon(id: String) -> void:
-	if profile.meta.unlocked.has(id) or int(profile.meta.shards) < 8:
+	if profile.meta.unlocked.has(id):
 		return
-	profile.meta.shards -= 8
-	profile.meta.unlocked.append(id)
-	persist_profile()
-	ui.show_unlocks()
+	const WEAPON_COIN_PRICE := 50
+	if coins >= WEAPON_COIN_PRICE:
+		coins -= WEAPON_COIN_PRICE
+		profile.meta.unlocked.append(id)
+		audio.play_sfx("buy")
+		flash_text("ĐÃ MUA VŨ KHÍ! (-50 COIN)", Color("35e7ff"))
+		persist_profile()
+		ui.show_unlocks()
+		return
+	if int(profile.meta.shards) >= 8:
+		profile.meta.shards -= 8
+		profile.meta.unlocked.append(id)
+		audio.play_sfx("buy")
+		flash_text("ĐÃ MỞ KHÓA VŨ KHÍ! (-8 MẢNH)", Color("35e7ff"))
+		persist_profile()
+		ui.show_unlocks()
+		return
+	flash_text("Cần 50 Coin hoặc 8 Mảnh để mở khóa!", Color("ff846f"))
 
 func select_starter(id: String) -> void:
-	if id == "pistol" or not profile.meta.unlocked.has(id):
+	if not profile.meta.unlocked.has(id):
 		return
 	starter = id
 	profile.meta.starter = starter
 	persist_profile()
 	ui.show_unlocks()
 
+const DRONE_PRICES := {
+	"plasma": {"coin": 60, "shard": 10},
+	"scout": {"coin": 75, "shard": 12},
+	"bomb": {"coin": 90, "shard": 14},
+	"laser": {"coin": 110, "shard": 16},
+	"support": {"coin": 120, "shard": 18},
+}
+
+func unlock_drone(id: String) -> bool:
+	if not profile.meta.has("unlocked_drones") or not profile.meta.unlocked_drones is Array:
+		profile.meta["unlocked_drones"] = []
+	if profile.meta.unlocked_drones.has(id):
+		select_drone(id, state != "shop")
+		return true
+	var cost_info: Dictionary = DRONE_PRICES.get(id, {"coin": 60, "shard": 10})
+	var coin_cost: int = int(cost_info.coin)
+	var shard_cost: int = int(cost_info.shard)
+	
+	if coins >= coin_cost:
+		coins -= coin_cost
+		profile.meta.unlocked_drones.append(id)
+		select_drone(id, false)
+		audio.play_sfx("buy")
+		flash_text("ĐÃ MỞ KHÓA DRONE! (-%d COIN)" % coin_cost, Color("35e7ff"))
+		if state != "shop":
+			ui.show_unlocks()
+		return true
+	elif int(profile.meta.get("shards", 0)) >= shard_cost:
+		profile.meta.shards -= shard_cost
+		profile.meta.unlocked_drones.append(id)
+		select_drone(id, false)
+		audio.play_sfx("buy")
+		flash_text("ĐÃ MỞ KHÓA DRONE! (-%d MẢNH)" % shard_cost, Color("35e7ff"))
+		if state != "shop":
+			ui.show_unlocks()
+		return true
+	flash_text("Cần %d Coin hoặc %d Mảnh để mở khóa Drone!" % [coin_cost, shard_cost], Color("ff846f"))
+	return false
+
+func _sync_checkpoint_drone_selection() -> void:
+	var checkpoint: Variant = profile.get("checkpoint", {})
+	if not checkpoint is Dictionary or checkpoint.is_empty():
+		return
+	checkpoint["selected_drone"] = selected_drone
+	checkpoint["has_drone"] = has_drone
+	profile["checkpoint"] = checkpoint
+
+func select_drone(id: String, refresh_ui: bool = true) -> void:
+	if not profile.meta.has("unlocked_drones") or not profile.meta.unlocked_drones is Array:
+		profile.meta["unlocked_drones"] = []
+	if id == "":
+		selected_drone = ""
+		has_drone = false
+		profile.meta["selected_drone"] = ""
+		profile.meta["has_drone"] = false
+		_sync_checkpoint_drone_selection()
+		if companion_drone != null:
+			companion_drone.enabled = false
+			companion_drone.visible = false
+		persist_profile()
+		if refresh_ui:
+			ui.show_unlocks()
+		return
+	if not profile.meta.unlocked_drones.has(id):
+		return
+	selected_drone = id
+	has_drone = true
+	profile.meta["selected_drone"] = id
+	profile.meta["has_drone"] = true
+	_sync_checkpoint_drone_selection()
+	if companion_drone != null:
+		companion_drone.enabled = true
+		companion_drone.visible = true
+		companion_drone.set_drone_type(id)
+		companion_drone.reset_position()
+	persist_profile()
+	if refresh_ui:
+		ui.show_unlocks()
+
 func on_enemy_killed(enemy: Dictionary) -> void:
 	run_kills += 1
-	player.resonance = minf(100, player.resonance + (20 if enemy.get("boss", false) else 7))
-	pickups.append({"pos": enemy.pos, "coins": int(enemy.get("reward", 4)) + 2, "energy": 5.0, "time": 0.0})
+	var is_boss: bool = bool(enemy.get("boss", false))
+	player.resonance = minf(100, player.resonance + (20 if is_boss else 7))
+	
+	# Rewarding coin drops: boss: 60-90, elite/heavy: 14-24, normal: 4-8
+	var coin_amt: int = 0
+	var base_reward: int = int(enemy.get("reward", 4))
+	if is_boss:
+		coin_amt = rng.randi_range(60, 90)
+	elif base_reward >= 10 or bool(enemy.get("elite", false)):
+		coin_amt = rng.randi_range(14, 24)
+	else:
+		coin_amt = rng.randi_range(base_reward + 2, base_reward + 6)
+	
+	pickups.append({"pos": enemy.pos, "coins": coin_amt, "energy": 5.0, "time": 0.0})
 	audio.play_sfx("hit")
 	add_fx(enemy.pos, Color("9b4dff"), 25)
 	if int(upgrades.get("explosion", 0)) > 0 and rng.randf() < 0.22 * int(upgrades.explosion):
@@ -2116,9 +2438,12 @@ func update_pickups(delta: float) -> void:
 			pickups.remove_at(index)
 
 func collect_pickup(pickup: Dictionary) -> void:
-	coins += int(pickup.coins)
+	var amt: int = int(pickup.coins)
+	coins += amt
 	player.energy = minf(player.max_energy, player.energy + float(pickup.energy))
 	audio.play_sfx("pickup")
+	if amt > 0:
+		add_fx(pickup.pos, Color("ffd700"), 18.0)
 
 func _on_beat(index: int) -> void:
 	if state == "playing" and combat_active:
@@ -2195,17 +2520,67 @@ func flash_text(message: String, color: Color = Color("35e7ff")) -> void:
 	flash_color = color
 	flash_time = 2.8
 
+func add_damage_number(at: Vector2, amount: float, is_crit: bool = false) -> void:
+	if settings.get("reduced_flashes", false):
+		return
+	var limit: int = 48 if int(settings.get("quality", 1)) > 0 else 20
+	if damage_numbers.size() >= limit:
+		return
+	var color: Color = Color("ff4444") if is_crit else Color("ffffff")
+	var text: String = "-%d!" % int(amount) if is_crit else "-%d" % int(amount)
+	damage_numbers.append({
+		"pos": at + Vector2(randf_range(-10, 10), 0),
+		"text": text,
+		"color": color,
+		"time": 0.85,
+		"vel": Vector2(randf_range(-14, 14), -80.0),
+	})
+
+func _update_damage_numbers(delta: float) -> void:
+	for i in range(damage_numbers.size() - 1, -1, -1):
+		var dn: Dictionary = damage_numbers[i]
+		dn.time -= delta
+		dn.pos += dn.vel * delta
+		dn.vel.y += 60 * delta  # gentle gravity
+		if dn.time <= 0:
+			damage_numbers.remove_at(i)
+
 func draw_effects(canvas: Node2D) -> void:
 	if state in ["menu", "game_over", "victory"]:
 		return
 	for pickup in pickups:
 		var at: Vector2 = pickup.pos
-		canvas.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -6), at + Vector2(5, 0), at + Vector2(0, 6), at + Vector2(-5, 0)]), Color("35e7ff"))
+		var time: float = float(pickup.get("time", 0.0))
+		var is_coin: bool = int(pickup.get("coins", 0)) > 0
+		if is_coin:
+			var pulse: float = 0.85 + 0.15 * sin(time * 7.0)
+			var coin_r: float = 6.0 * pulse
+			# Golden neon coin with glow
+			canvas.draw_circle(at, coin_r + 3.0, Color("ffd700", 0.22))
+			canvas.draw_circle(at, coin_r, Color("ffd700", 0.95))
+			canvas.draw_circle(at, coin_r * 0.55, Color("fff59d"))
+		else:
+			canvas.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -6), at + Vector2(5, 0), at + Vector2(0, 6), at + Vector2(-5, 0)]), Color("35e7ff"))
 	for effect in effects:
 		var progress: float = 1.0 - effect.time / 0.35
 		var color: Color = effect.color
 		color.a = (1 - progress) * (0.45 if settings.get("reduced_flashes", false) else 0.8)
 		canvas.draw_arc(effect.pos, maxf(1, effect.radius * progress), 0, TAU, 32, color, 2)
+	# Draw floating damage numbers
+	if not settings.get("reduced_flashes", false):
+		for dn in damage_numbers:
+			var alpha: float = clampf(dn.time / 0.85, 0.0, 1.0)
+			var scale_t: float = 1.0 - clampf((0.85 - dn.time) / 0.15, 0.0, 1.0)
+			var font_size: int = 18 + int(scale_t * 6)
+			var col: Color = dn.color
+			col.a = alpha
+			# Draw shadow for readability
+			var shadow := col
+			shadow.r = 0; shadow.g = 0; shadow.b = 0; shadow.a = alpha * 0.55
+			canvas.draw_string(ThemeDB.fallback_font, dn.pos + Vector2(1, 1), dn.text,
+				HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, shadow)
+			canvas.draw_string(ThemeDB.fallback_font, dn.pos, dn.text,
+				HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, col)
 	if weapon_system != null:
 		for line in weapon_system.beam_lines:
 			var duration: float = maxf(0.001, float(line.get("duration", 0.2)))
@@ -2220,6 +2595,7 @@ func draw_effects(canvas: Node2D) -> void:
 			_draw_weapon_muzzle(canvas, muzzle)
 		if weapon_system.orbit_time > 0:
 			_draw_orbit_driver(canvas)
+
 
 func _draw_prism_beam(canvas: Node2D, line: Dictionary, fade: float) -> void:
 	var from: Vector2 = line.from

@@ -20,6 +20,8 @@ var current_weapon_button: Button
 var status_label: Label
 var hint_label: Label
 var boss_label: Label
+var coin_label: Label
+var shop_button: Button
 var bars: Dictionary = {}
 var beat_display: Control
 var minimap: Control
@@ -37,6 +39,7 @@ var armory_layout_editor
 var armory_layout_controls: Dictionary = {}
 var armory_layout_positions: Dictionary = {}
 var armory_layout_scales: Dictionary = {}
+var current_armory_tab: String = "weapons"
 var pause_layout_editor
 var pause_layout_groups: Dictionary = {}
 var pause_layout_positions: Dictionary = {}
@@ -60,6 +63,9 @@ var _last_hud_title_text: String = ""
 var overlay_box: Control
 var settings_return: String = "menu"
 var theme_resource: Theme
+var menu_background_base: TextureRect
+var menu_background_layers: Array[Dictionary] = []
+var menu_background_time: float = 0.0
 # This debug-only editor moves whole runtime groups while the exterior Settings
 # artwork stays fixed. The working Vector2 values live here; they are serialized
 # into the profile only when the user presses F7 to leave placement mode.
@@ -74,7 +80,13 @@ const LED_PURPLE = Color("d65dff")
 const WHITE = Color("e6f7ff")
 const MUTED = Color("a79abb")
 const CORAL = Color("ff846f")
-const MENU_BACKGROUND := "res://assets/backgrounds/menu_resonance_console_v1.png"
+const MENU_BACKGROUND_BASE := "res://background/2 Background/1.png"
+const MENU_BACKGROUND_LAYERS := [
+	{"path": "res://background/2 Background/2.png", "speed": 2.0},
+	{"path": "res://background/2 Background/3.png", "speed": 4.0},
+	{"path": "res://background/2 Background/4.png", "speed": 7.0},
+	{"path": "res://background/2 Background/5.png", "speed": 12.0},
+]
 const ARMORY_BACKGROUND := "res://assets/backgrounds/armory_loadout_matrix_v1.png"
 const SETTINGS_BACKGROUND := "res://assets/backgrounds/settings_calibration_console_v2.png"
 const GAMEPLAY_HUD_BACKGROUND := "res://assets/backgrounds/gameplay_hud_overlay_v5.png"
@@ -413,6 +425,8 @@ func background_texture(parent: Node, path: String, stretch_mode: int = TextureR
 	return image
 
 func clear_overlay() -> void:
+	menu_background_layers.clear()
+	menu_background_base = null
 	settings_layout_editor = null
 	settings_layout_groups.clear()
 	armory_layout_editor = null
@@ -428,6 +442,7 @@ func clear_overlay() -> void:
 			child.hide()
 		if child is Control:
 			child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		overlay.remove_child(child)
 		child.queue_free()
 	overlay.visible = true
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -552,6 +567,30 @@ func build_hud() -> void:
 	create_bar("shield", Rect2(0, 0, 194, 11), CYAN, shield_group)
 	var energy_group := hud_layout_group("energy", Rect2(84, 80, 194, 10))
 	create_bar("energy", Rect2(0, 0, 194, 10), Color("3478ff"), energy_group)
+	
+	# Coin Display on HUD
+	var coin_container := Panel.new()
+	coin_container.name = "GameplayHud_CoinContainer"
+	coin_container.position = Vector2(84, 96)
+	coin_container.size = Vector2(194, 22)
+	var coin_box_style := StyleBoxFlat.new()
+	coin_box_style.bg_color = Color(0.04, 0.03, 0.01, 0.6)
+	coin_box_style.border_color = Color("ffd700")
+	coin_box_style.set_border_width_all(1)
+	coin_box_style.set_corner_radius_all(4)
+	coin_container.add_theme_stylebox_override("panel", coin_box_style)
+	coin_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(coin_container)
+	
+	coin_label = plain_label(coin_container, "🪙 0 COIN", Rect2(6, 1, 182, 20), 14, Color("ffd700"), true)
+	coin_label.name = "GameplayHud_CoinLabel"
+	coin_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# Quick Shop Button on HUD (Mobile Touch Friendly)
+	shop_button = gameplay_button(hud, "🛒 CỬA HÀNG", Rect2(1048, 16, 118, 66), game.open_cyber_shop, false, Color("ffd700"))
+	shop_button.name = "Gameplay_ShopButton"
+	shop_button.add_theme_font_override("font", bold)
+	shop_button.add_theme_font_size_override("font_size", 14)
 	# Pulse is drawn by TouchControls. The live gauge starts at the authored
 	# default position and is re-anchored to the saved Pulse transform once the
 	# touch targets have been created.
@@ -590,7 +629,7 @@ func build_hud() -> void:
 	current_weapon_button.name = "Gameplay_WeaponSlotButton"
 	current_weapon_button.position = Vector2.ZERO
 	current_weapon_button.size = weapon_group.size
-	current_weapon_button.tooltip_text = "Chạm vào ô vũ khí để đổi vũ khí"
+	current_weapon_button.tooltip_text = "Vũ khí đang trang bị"
 	current_weapon_button.focus_mode = Control.FOCUS_NONE
 	current_weapon_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	current_weapon_button.flat = true
@@ -976,6 +1015,8 @@ func draw_minimap() -> void:
 func _process(_delta: float) -> void:
 	if game == null:
 		return
+	if game.state == "menu":
+		_animate_menu_background(_delta)
 	hud.visible = game.state not in ["menu", "game_over", "victory", "unlocks"]
 	if hud_layout_editor != null and game.state != "playing" and hud_layout_editor.is_editor_active():
 		hud_layout_editor.set_editor_active(false)
@@ -992,11 +1033,16 @@ func _process(_delta: float) -> void:
 	if music_toggle_button != null:
 		music_toggle_button.visible = demo_visible
 	var player = game.player
+	bars.hp.max_value = player.max_hp
 	bars.hp.value = player.hp
 	bars.shield.max_value = player.max_shield
 	bars.shield.value = player.shield
 	bars.energy.max_value = player.max_energy
 	bars.energy.value = player.energy
+	if coin_label != null and is_instance_valid(coin_label):
+		coin_label.text = "🪙 %d COIN" % game.coins
+	if shop_button != null and is_instance_valid(shop_button):
+		shop_button.visible = not demo_visible
 	sync_resonance_bar_layout()
 	bars.resonance.max_value = 100.0
 	bars.resonance.value = player.resonance
@@ -1018,11 +1064,10 @@ func _process(_delta: float) -> void:
 
 func show_menu() -> void:
 	clear_overlay()
-	# The menu art owns the static button frames. These controls only own the
-	# matching rectangular hit regions, labels, focus, hover, and pressed feedback.
-	background_texture(overlay, MENU_BACKGROUND, TextureRect.STRETCH_SCALE)
+	# Keep the lobby art separate from its interactive controls.
+	_add_menu_background_layers()
 	var veil = ColorRect.new()
-	veil.color = Color(0.008, 0.004, 0.035, 0.16)
+	veil.color = Color(0.008, 0.004, 0.035, 0.4)
 	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(veil)
@@ -1036,7 +1081,7 @@ func show_menu() -> void:
 	# confirmation instead of silently replacing a recoverable checkpoint.
 	var new_run_action: Callable = confirm_new_run if has_checkpoint else game.new_run
 	var new_run = menu_image_action("new_run", "LƯỢT MỚI", 1, new_run_action, LED_PURPLE)
-	menu_image_action("armory", "KHO VŨ KHÍ", 2, show_unlocks, CYAN)
+	menu_image_action("armory", "TRANG BỊ", 2, show_unlocks, CYAN)
 	menu_image_action("debug", "KHU VỰC DEBUG", 3, show_debug_zones, LED_PURPLE)
 	menu_image_action("settings", "CÀI ĐẶT", 4, func(): show_settings("menu"), CYAN)
 	if has_checkpoint:
@@ -1047,42 +1092,63 @@ func show_menu() -> void:
 func menu_action_rect(index: int) -> Rect2:
 	return Rect2(MENU_ACTION_ORIGIN + Vector2(0.0, index * (MENU_ACTION_SIZE.y + MENU_ACTION_GAP)), MENU_ACTION_SIZE)
 
+func _add_menu_background_layers() -> void:
+	menu_background_time = 0.0
+	menu_background_layers.clear()
+	var viewport_size := get_viewport().get_visible_rect().size
+	menu_background_base = background_texture(overlay, MENU_BACKGROUND_BASE, TextureRect.STRETCH_SCALE)
+	menu_background_base.name = "MenuBackgroundBase"
+	for layer_info: Dictionary in MENU_BACKGROUND_LAYERS:
+		var layer_texture := load(str(layer_info.path)) as Texture2D
+		var copies: Array[Sprite2D] = []
+		for copy_index in range(2):
+			var sprite := Sprite2D.new()
+			sprite.name = "MenuBackgroundLayer_%d_Copy_%d" % [menu_background_layers.size(), copy_index]
+			sprite.texture = layer_texture
+			sprite.flip_h = copy_index == 1
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			sprite.centered = true
+			overlay.add_child(sprite)
+			copies.append(sprite)
+		menu_background_layers.append({"sprites": copies, "speed": float(layer_info.speed)})
+	_layout_menu_background_layers()
+
+func _animate_menu_background(delta: float) -> void:
+	if menu_background_base == null or menu_background_layers.is_empty():
+		return
+	menu_background_time += delta
+	_layout_menu_background_layers()
+
+func _layout_menu_background_layers() -> void:
+	var viewport_size := get_viewport().get_visible_rect().size
+	var tile_width: float = viewport_size.x
+	var loop_width: float = tile_width * 2.0
+	for layer_info: Dictionary in menu_background_layers:
+		var copies: Array = layer_info.sprites
+		var texture: Texture2D = copies[0].texture
+		var scale_to_viewport := Vector2(viewport_size.x / texture.get_width(), viewport_size.y / texture.get_height())
+		var travel: float = fposmod(menu_background_time * float(layer_info.speed) * 2.0, loop_width)
+		var first_x: float = fposmod(tile_width - travel, loop_width) - tile_width * 0.5
+		var second_x: float = fposmod(tile_width * 2.0 - travel, loop_width) - tile_width * 0.5
+		if second_x <= -tile_width * 0.5:
+			second_x += loop_width
+		for copy_index in range(copies.size()):
+			var sprite: Sprite2D = copies[copy_index]
+			sprite.scale = scale_to_viewport
+			sprite.position = Vector2(first_x if copy_index == 0 else second_x, viewport_size.y * 0.5)
+
 func menu_image_action(action_id: String, title_text: String, index: int, action: Callable, accent: Color, disabled: bool = false) -> Button:
 	var rect := menu_action_rect(index)
-	var title_color := Color("69778c") if disabled else accent
-	var title_label = label(overlay, title_text, Rect2(rect.position + Vector2(0, 22), Vector2(rect.size.x, 32)), 23, title_color, true)
-	title_label.add_theme_color_override("font_outline_color", Color(title_color.r, title_color.g, title_color.b, 0.72))
-	title_label.add_theme_color_override("font_shadow_color", Color(title_color.r, title_color.g, title_color.b, 0.82))
-	title_label.add_theme_constant_override("outline_size", 1)
-	title_label.add_theme_constant_override("shadow_outline_size", 3)
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var target = Button.new()
+	var target := button(overlay, title_text, rect, action, false, accent)
 	target.name = "Menu_%s_Hitbox" % action_id
-	target.text = title_text
 	target.tooltip_text = title_text
-	target.position = rect.position
-	target.size = rect.size
+	target.add_theme_font_override("font", bold)
+	target.add_theme_font_size_override("font_size", 23)
+	target.add_theme_color_override("font_disabled_color", Color("69778c"))
 	target.focus_mode = Control.FOCUS_ALL
-	target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	target.flat = true
 	target.disabled = disabled
 	target.set_meta("menu_action_id", action_id)
 	target.set_meta("menu_art_rect", rect)
-	var transparent = StyleBoxEmpty.new()
-	target.add_theme_stylebox_override("normal", transparent)
-	target.add_theme_stylebox_override("disabled", transparent)
-	target.add_theme_stylebox_override("hover", menu_hitbox_style(accent, 0.08, 2))
-	target.add_theme_stylebox_override("pressed", menu_hitbox_style(accent, 0.16, 3))
-	target.add_theme_stylebox_override("focus", transparent)
-	var invisible_text := Color(1, 1, 1, 0)
-	target.add_theme_color_override("font_color", invisible_text)
-	target.add_theme_color_override("font_hover_color", invisible_text)
-	target.add_theme_color_override("font_pressed_color", invisible_text)
-	target.add_theme_color_override("font_focus_color", invisible_text)
-	target.add_theme_color_override("font_disabled_color", invisible_text)
-	target.pressed.connect(action)
-	overlay.add_child(target)
 	return target
 
 func cycle_starter() -> void:
@@ -1502,6 +1568,175 @@ func show_map() -> void:
 		button(overlay, "Khôi phục NOCTIS" if game.stage_index == 4 else "Sang khu vực tiếp theo", Rect2(808, 606, 374, 58), func(): game.travel(6), true)
 	button(overlay, "Trở lại phòng", Rect2(92, 606, 342, 58), game.resume_game)
 	label(overlay, "O: xem rào · G: 1 đợt quái C1–C4 · U: boss. Combat debug không lưu tiến độ." if map_debug else ("Di chuyển trực tiếp trên map; phòng chưa mở bị chặn." if continuous_route else "Chỉ đi tới phòng nối trực tiếp. Cửa chỉ khóa khi đang giao chiến hoặc đấu boss."), Rect2(453, 611, 335, 58), 16, MUTED)
+
+func show_cyber_shop() -> void:
+	clear_overlay()
+	background_texture(overlay, REWARD_BACKGROUND, TextureRect.STRETCH_SCALE)
+	
+	# Header title
+	var title := led_label(overlay, "CYBER SHOP · TRẠM NÂNG CẤP CHIẾN ĐẤU", Rect2(0, 16, 1280, 34), 23, CYAN, true)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	var subtitle := plain_label(overlay, "Thu thập Coin khi diệt quái mỗi đợt để nâng cấp Drone trợ chiến và sức mạnh sinh tồn", Rect2(0, 51, 1280, 20), 13, MUTED)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	# Balance banner in the center
+	glow_panel(overlay, Rect2(440, 76, 400, 38), Color(0.06, 0.04, 0.01, 0.9), Color("ffd700"))
+	var balance_text := plain_label(overlay, "🪙 SỐ DƯ: %d COIN" % game.coins, Rect2(440, 78, 400, 34), 18, Color("ffd700"), true)
+	balance_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	balance_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# 7 Upgrade Items (4 Left column, 3 Right column)
+	var left_x: float = 65.0
+	var right_x: float = 675.0
+	var card_w: float = 540.0
+	var card_h: float = 102.0
+	var start_y: float = 126.0
+	var gap_y: float = 112.0
+	
+	var player = game.player
+	var upgrades: Dictionary = game.upgrades
+	var has_drone: bool = game.has_drone or int(upgrades.get("drone", 0)) > 0
+	var drone_overclock_lvl: int = int(upgrades.get("drone_overclock", 0))
+	var health_lvl: int = int(upgrades.get("health", 0))
+	var shield_lvl: int = int(upgrades.get("shield", 0))
+	var damage_lvl: int = int(upgrades.get("damage", 0))
+	var magnet_lvl: int = int(upgrades.get("magnet", 0))
+	var speed_lvl: int = int(upgrades.get("speed", 0))
+	
+	var items: Array = [
+		{
+			"col": 0, "row": 0,
+			"icon": "⚡",
+			"name": "Drone Overclock",
+			"desc": "Tăng 25% tốc độ bắn đạn và +6 sát thương đạn Plasma mỗi cấp (yêu cầu sở hữu Drone).",
+			"level_text": "Cấp %d/3" % drone_overclock_lvl if drone_overclock_lvl < 3 else "TỐI ĐA (Cấp 3/3)",
+			"price": 45,
+			"disabled": (not has_drone) or drone_overclock_lvl >= 3 or game.coins < 45,
+			"btn_text": "TỐI ĐA" if drone_overclock_lvl >= 3 else ("CHƯA CÓ DRONE" if not has_drone else "NÂNG CẤP 45 🪙"),
+			"action_id": "drone_overclock",
+		},
+		{
+			"col": 1, "row": 0,
+			"icon": "❤️",
+			"name": "Hồi Máu Khẩn Cấp (+45 HP)",
+			"desc": "Hồi ngay lập tức 45 HP sinh lực (hiện tại: %d/%d HP)." % [int(player.hp), int(player.max_hp)],
+			"level_text": "Khẩn cấp",
+			"price": 20,
+			"disabled": player.hp >= player.max_hp or game.coins < 20,
+			"btn_text": "MÁU ĐẦY" if player.hp >= player.max_hp else "HỒI 20 🪙",
+			"action_id": "heal",
+		},
+		{
+			"col": 0, "row": 1,
+			"icon": "💖",
+			"name": "Gia Cố Máu Tối Đa (+25 Max HP)",
+			"desc": "+25 Máu tối đa vĩnh viễn và hồi ngay 25 HP. Máu tối đa hiện tại: %d HP." % int(player.max_hp),
+			"level_text": "Cấp %d/5" % health_lvl if health_lvl < 5 else "TỐI ĐA (Cấp 5/5)",
+			"price": 35 + health_lvl * 10,
+			"disabled": health_lvl >= 5 or game.coins < (35 + health_lvl * 10),
+			"btn_text": "TỐI ĐA" if health_lvl >= 5 else "MUA %d 🪙" % (35 + health_lvl * 10),
+			"action_id": "max_hp",
+		},
+		{
+			"col": 1, "row": 1,
+			"icon": "🛡️",
+			"name": "Khuếch Đại Khiên (+20 Max Shield)",
+			"desc": "+20 Khiên tối đa vĩnh viễn và nạp đầy khiên ngay. Khiên tối đa hiện tại: %d." % int(player.max_shield),
+			"level_text": "Cấp %d/5" % shield_lvl if shield_lvl < 5 else "TỐI ĐA (Cấp 5/5)",
+			"price": 30 + shield_lvl * 10,
+			"disabled": shield_lvl >= 5 or game.coins < (30 + shield_lvl * 10),
+			"btn_text": "TỐI ĐA" if shield_lvl >= 5 else "MUA %d 🪙" % (30 + shield_lvl * 10),
+			"action_id": "max_shield",
+		},
+		{
+			"col": 0, "row": 2,
+			"icon": "⚔️",
+			"name": "Tăng Sát Thương Vũ Khí (+15%)",
+			"desc": "+15% sát thương toàn bộ súng, đạn và đòn đánh. Sát thương cộng thêm: +" + str(damage_lvl * 15) + "%.",
+			"level_text": "Cấp %d/5" % damage_lvl if damage_lvl < 5 else "TỐI ĐA (Cấp 5/5)",
+			"price": 40 + damage_lvl * 15,
+			"disabled": damage_lvl >= 5 or game.coins < (40 + damage_lvl * 15),
+			"btn_text": "TỐI ĐA" if damage_lvl >= 5 else "MUA %d 🪙" % (40 + damage_lvl * 15),
+			"action_id": "damage",
+		},
+		{
+			"col": 1, "row": 2,
+			"icon": "🧲",
+			"name": "Nam Châm Hút Coin (+50 px)",
+			"desc": "Tăng bán kính tự động hút Coin và Năng lượng thêm +50px giúp farm coin cực nhàn.",
+			"level_text": "Cấp %d/3" % magnet_lvl if magnet_lvl < 3 else "TỐI ĐA (Cấp 3/3)",
+			"price": 25,
+			"disabled": magnet_lvl >= 3 or game.coins < 25,
+			"btn_text": "TỐI ĐA" if magnet_lvl >= 3 else "MUA 25 🪙",
+			"action_id": "magnet",
+		},
+		{
+			"col": 0, "row": 3,
+			"icon": "💨",
+			"name": "Tốc Độ Di Chuyển (+23 px/s)",
+			"desc": "+23 px/s tốc độ chạy giúp nhân vật di chuyển cơ động, né đạn quái linh hoạt hơn.",
+			"level_text": "Cấp %d/3" % speed_lvl if speed_lvl < 3 else "TỐI ĐA (Cấp 3/3)",
+			"price": 30,
+			"disabled": speed_lvl >= 3 or game.coins < 30,
+			"btn_text": "TỐI ĐA" if speed_lvl >= 3 else "MUA 30 🪙",
+			"action_id": "speed",
+		}
+	]
+	
+	for item in items:
+		var x: float = left_x if item.col == 0 else right_x
+		var y: float = start_y + item.row * gap_y
+		var card_rect := Rect2(x, y, card_w, card_h)
+		
+		# Card background panel
+		panel(overlay, card_rect, Color(0.03, 0.02, 0.07, 0.88), Color("39284f") if item.disabled else CYAN)
+		
+		# Icon & Title
+		var title_str: String = "%s %s" % [item.icon, item.name]
+		var item_title := plain_label(overlay, title_str, Rect2(x + 12, y + 8, card_w - 140, 24), 15, Color("35e7ff") if not item.disabled else MUTED, true)
+		item_title.autowrap_mode = TextServer.AUTOWRAP_OFF
+		item_title.clip_text = true
+		
+		# Level badge
+		var lvl_lbl := plain_label(overlay, "[%s]" % item.level_text, Rect2(x + card_w - 104, y + 9, 92, 20), 11, Color("ffd700") if item.disabled else CYAN)
+		lvl_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		lvl_lbl.clip_text = true
+		
+		# Description
+		var card_desc := plain_label(overlay, item.desc, Rect2(x + 12, y + 34, card_w - 170, 60), 12, MUTED)
+		card_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		
+		# Buy Button
+		var btn_rect := Rect2(x + card_w - 150, y + 30, 140, 48)
+		var action_cb: Callable = _on_cyber_shop_buy.bind(String(item.action_id))
+		var btn: Button = button(overlay, item.btn_text, btn_rect, action_cb, not item.disabled, Color("ffd700") if not item.disabled else MUTED)
+		btn.add_theme_font_size_override("font_size", 13)
+		btn.disabled = item.disabled
+		btn.focus_mode = Control.FOCUS_NONE
+	
+	# Close / Resume Button at bottom (Touch-first for Mobile)
+	var close_btn := button(overlay, "TIẾP TỤC CHIẾN ĐẤU  ▶", Rect2(440, 584, 400, 52), game.resume_game, true, CYAN)
+	close_btn.add_theme_font_size_override("font_size", 17)
+	close_btn.grab_focus()
+
+func _on_cyber_shop_buy(action_id: String) -> void:
+	match action_id:
+		"drone_overclock":
+			game.buy_drone_overclock()
+		"heal":
+			game.buy_heal_hp()
+		"max_hp":
+			game.buy_max_hp_upgrade()
+		"max_shield":
+			game.buy_max_shield_upgrade()
+		"damage":
+			game.buy_damage_upgrade()
+		"magnet":
+			game.buy_magnet_upgrade()
+		"speed":
+			game.buy_speed_upgrade()
+	show_cyber_shop()
 
 func show_shop(offers: Array) -> void:
 	var kind: String = game.graph.support
@@ -2281,12 +2516,11 @@ func show_help() -> void:
 		label(overlay, bodies[i], Rect2(x + 22, 324, 307, 244), 19, MUTED)
 	button(overlay, "ĐÃ HIỂU", Rect2(463, 624, 354, 60), show_menu, true)
 
-func show_unlocks() -> void:
+func show_unlocks(target_tab: String = "") -> void:
 	game.state = "unlocks"
+	if not target_tab.is_empty():
+		current_armory_tab = target_tab
 	clear_overlay()
-	# The artwork owns the chassis, data bays, and return frame. Every mutable
-	# element below remains runtime UI so current loadout data never becomes baked
-	# into the image.
 	background_texture(overlay, ARMORY_BACKGROUND, TextureRect.STRETCH_SCALE)
 	var veil = ColorRect.new()
 	veil.color = Color(0.004, 0.01, 0.028, 0.12)
@@ -2294,50 +2528,222 @@ func show_unlocks() -> void:
 	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(veil)
 	var armory_entries: Array = []
-	var title_rect := Rect2(64, 36, 480, 58)
-	var title = plain_label(overlay, "KHO VŨ KHÍ", title_rect, 42, CYAN, true)
+	var title_rect := Rect2(64, 30, 210, 44)
+	var title = plain_label(overlay, "TRANG BỊ", title_rect, 30, CYAN, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title.clip_text = true
 	armory_layout_apply_control("title", title, title_rect)
 	armory_entries.append({"id": "title", "target": title, "label": "TIÊU ĐỀ", "accent": CYAN, "default_position": title_rect.position, "default_scale": Vector2.ONE})
+	
+	# Tab Switchers: VŨ KHÍ vs DRONE
+	var tab_w_accent: Color = CYAN if current_armory_tab == "weapons" else MUTED
+	var tab_d_accent: Color = CYAN if current_armory_tab == "drones" else MUTED
+	var tab_w_btn := button(overlay, "⚔  VŨ KHÍ", Rect2(285, 32, 135, 46), func(): show_unlocks("weapons"), true, tab_w_accent)
+	tab_w_btn.add_theme_font_size_override("font_size", 15)
+	tab_w_btn.name = "Armory_Tab_Weapons"
+	tab_w_btn.focus_mode = Control.FOCUS_NONE
+	var tab_d_btn := button(overlay, "🛸  DRONE", Rect2(430, 32, 135, 46), func(): show_unlocks("drones"), true, tab_d_accent)
+	tab_d_btn.add_theme_font_size_override("font_size", 15)
+	tab_d_btn.name = "Armory_Tab_Drones"
+	tab_d_btn.focus_mode = Control.FOCUS_NONE
+	
 	accent_rule(overlay, Rect2(64, 117, 426, 2), Color(CYAN.r, CYAN.g, CYAN.b, 0.74))
-	var first_action: Button
-	for i in range(game.content.weapons.size()):
-		var weapon: Dictionary = game.content.weapons[i]
-		var column: int = i % 4
-		var row: int = i / 4
-		var card_position: Vector2 = ARMORY_GRID_ORIGIN + Vector2(column * (ARMORY_CARD_SIZE.x + ARMORY_CARD_GAP.x), row * (ARMORY_CARD_SIZE.y + ARMORY_CARD_GAP.y))
-		var card_rect := Rect2(card_position, ARMORY_CARD_SIZE)
-		var unlocked: bool = game.profile.meta.unlocked.has(weapon.id)
-		var fixed_primary: bool = weapon.id == "pistol"
-		var selected: bool = unlocked and weapon.id == game.starter
-		var state: int = armory_loadout_state(fixed_primary, selected, unlocked)
-		var can_activate: bool = not fixed_primary and not selected and (unlocked or int(game.profile.meta.shards) >= 8)
-		var accent: Color = LED_PURPLE if selected else (CYAN if fixed_primary else (CYAN if unlocked else Color("756b91")))
-		var state_visual = WeaponLoadoutStateScript.new()
-		state_visual.name = "ArmoryState_%s" % weapon.id
-		state_visual.position = card_position
-		state_visual.size = ARMORY_CARD_SIZE
-		state_visual.set_meta("armory_weapon_id", weapon.id)
-		state_visual.configure(state, str(weapon.id), can_activate)
-		overlay.add_child(state_visual)
-		var details: Dictionary = armory_weapon_details(weapon, i, card_position, accent)
-		var stt_rect := Rect2(card_position + Vector2(15, 10), Vector2(34, 17))
-		var name_rect := Rect2(card_position + Vector2(92, 18), Vector2(154, 23))
-		armory_entries.append({"id": "%s_stt" % weapon.id, "target": details.get("stt"), "label": "%02d · STT" % (i + 1), "accent": accent, "default_position": stt_rect.position, "default_scale": Vector2.ONE})
-		armory_entries.append({"id": "%s_name" % weapon.id, "target": details.get("name"), "label": "%02d · TÊN" % (i + 1), "accent": CYAN, "default_position": name_rect.position, "default_scale": Vector2.ONE})
-		var action: Callable = func(): game.select_starter(weapon.id) if unlocked else game.unlock_weapon(weapon.id)
-		armory_weapon_hitbox(str(weapon.id), str(weapon.name), card_rect, action, can_activate, state_visual)
-		var action_rect := armory_action_rect(card_rect)
-		var action_button := armory_weapon_action_button(str(weapon.id), armory_loadout_text(state), action_rect, action, can_activate, accent, state_visual)
-		armory_entries.append({"id": "%s_action" % weapon.id, "target": action_button, "label": "%02d · TRANG BỊ" % (i + 1), "accent": accent, "default_position": action_rect.position, "default_scale": Vector2.ONE})
-		if first_action == null and can_activate:
-			first_action = action_button
-	var return_button := armory_return_button()
-	show_armory_layout_editor(armory_entries)
-	if first_action != null:
-		first_action.grab_focus()
+	
+	# Currency banner
+	var coins_count: int = game.coins if (game != null and "coins" in game) else 0
+	var shards_count: int = int(game.profile.meta.get("shards", 0)) if (game != null and "profile" in game and "meta" in game.profile) else 0
+	var currency_lbl := plain_label(overlay, "🪙 %d COIN   ·   💎 %d MẢNH" % [coins_count, shards_count], Rect2(64, 82, 426, 24), 14, Color("ffd700"), true)
+	currency_lbl.name = "Armory_CurrencyLabel"
+	currency_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+	currency_lbl.clip_text = true
+	
+	if current_armory_tab == "weapons":
+		# Dedicated Drone Companion Quick Bay
+		var drone_bay_rect := Rect2(590, 24, 626, 88)
+		var has_drone: bool = bool(game.has_drone if (game != null and "has_drone" in game) else false) or int(game.upgrades.get("drone", 0) if (game != null and "upgrades" in game) else 0) > 0 or bool(game.profile.meta.get("has_drone", false) if (game != null and "profile" in game and "meta" in game.profile) else false)
+		var drone_active: bool = game != null and game.companion_drone != null and game.companion_drone.enabled
+		var drone_accent: Color = Color("35e7ff") if has_drone else Color("4d3566")
+		panel(overlay, drone_bay_rect, Color(0.04, 0.02, 0.08, 0.94), drone_accent)
+		
+		var drone_icon_box := Rect2(602, 34, 68, 68)
+		glow_panel(overlay, drone_icon_box, Color(0.02, 0.04, 0.08, 0.95), CYAN if has_drone else MUTED)
+		var drone_icon_lbl := plain_label(overlay, "🛸", Rect2(602, 40, 68, 48), 34, CYAN, true)
+		drone_icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		
+		var drone_title := plain_label(overlay, "DRONE TRỢ CHIẾN PLASMA", Rect2(682, 32, 340, 22), 15, Color("35e7ff") if has_drone else Color("ffd700"), true)
+		drone_title.autowrap_mode = TextServer.AUTOWRAP_OFF
+		drone_title.clip_text = true
+		var drone_status_text: String
+		if has_drone:
+			drone_status_text = "Đang trang bị [BẬT] · Bay bọc lót, bắn Plasma 14 dmg" if drone_active else "Đang dự bị [TẮT] · Bấm nút để trang bị mang vào trận"
+		else:
+			drone_status_text = "Tự động bay bọc lót, bắn plasma 14 dmg (Phím T để Bật/Tắt)"
+		var drone_desc := plain_label(overlay, drone_status_text, Rect2(682, 54, 340, 48), 11, Color("35e7ff") if (has_drone and drone_active) else MUTED)
+		drone_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		
+		var drone_btn_rect := Rect2(1038, 42, 166, 52)
+		var drone_btn_text: String
+		var drone_btn_can_act: bool = false
+		var drone_action: Callable
+		if not has_drone:
+			drone_btn_text = "MUA 60 🪙"
+			drone_btn_can_act = coins_count >= 60 or shards_count >= 10
+			drone_action = func():
+				if game.buy_drone_companion():
+					show_unlocks()
+		else:
+			drone_btn_text = "ĐANG BẬT [TẮT]" if drone_active else "CHỌN TRANG BỊ"
+			drone_btn_can_act = true
+			drone_action = func():
+				if game.companion_drone != null:
+					game.companion_drone.enabled = not game.companion_drone.enabled
+					game.companion_drone.visible = game.companion_drone.enabled
+				game.persist_profile()
+				show_unlocks()
+				
+		var drone_btn := button(overlay, drone_btn_text, drone_btn_rect, drone_action, drone_btn_can_act, Color("ffd700") if not has_drone else CYAN)
+		drone_btn.add_theme_font_size_override("font_size", 14)
+		drone_btn.name = "Armory_DroneActionButton"
+		drone_btn.disabled = not drone_btn_can_act
+		drone_btn.focus_mode = Control.FOCUS_NONE
+		if not drone_btn_can_act:
+			drone_btn.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN
+			drone_btn.modulate = Color(1, 1, 1, 0.5)
+		
+		var first_action: Button
+		for i in range(game.content.weapons.size()):
+			var weapon: Dictionary = game.content.weapons[i]
+			var column: int = i % 4
+			var row: int = i / 4
+			var card_position: Vector2 = ARMORY_GRID_ORIGIN + Vector2(column * (ARMORY_CARD_SIZE.x + ARMORY_CARD_GAP.x), row * (ARMORY_CARD_SIZE.y + ARMORY_CARD_GAP.y))
+			var card_rect := Rect2(card_position, ARMORY_CARD_SIZE)
+			var unlocked: bool = game.profile.meta.unlocked.has(weapon.id)
+			var fixed_primary: bool = weapon.id == "pistol"
+			var selected: bool = unlocked and weapon.id == game.starter
+			var state: int = armory_loadout_state(fixed_primary, selected, unlocked)
+			var can_activate: bool = not fixed_primary and not selected and (unlocked or int(game.profile.meta.shards) >= 8 or game.coins >= 50)
+			var accent: Color = LED_PURPLE if selected else (CYAN if fixed_primary else (CYAN if unlocked else Color("756b91")))
+			var state_visual = WeaponLoadoutStateScript.new()
+			state_visual.name = "ArmoryState_%s" % weapon.id
+			state_visual.position = card_position
+			state_visual.size = ARMORY_CARD_SIZE
+			state_visual.set_meta("armory_weapon_id", weapon.id)
+			state_visual.configure(state, str(weapon.id), can_activate)
+			overlay.add_child(state_visual)
+			var details: Dictionary = armory_weapon_details(weapon, i, card_position, accent)
+			var stt_rect := Rect2(card_position + Vector2(15, 10), Vector2(34, 17))
+			var name_rect := Rect2(card_position + Vector2(92, 18), Vector2(154, 23))
+			armory_entries.append({"id": "%s_stt" % weapon.id, "target": details.get("stt"), "label": "%02d · STT" % (i + 1), "accent": accent, "default_position": stt_rect.position, "default_scale": Vector2.ONE})
+			armory_entries.append({"id": "%s_name" % weapon.id, "target": details.get("name"), "label": "%02d · TÊN" % (i + 1), "accent": CYAN, "default_position": name_rect.position, "default_scale": Vector2.ONE})
+			var action: Callable = func(): game.select_starter(weapon.id) if unlocked else game.unlock_weapon(weapon.id)
+			armory_weapon_hitbox(str(weapon.id), str(weapon.name), card_rect, action, can_activate, state_visual)
+			var action_rect := armory_action_rect(card_rect)
+			var action_button := armory_weapon_action_button(str(weapon.id), armory_loadout_text(state, game.coins >= 50), action_rect, action, can_activate, accent, state_visual)
+			armory_entries.append({"id": "%s_action" % weapon.id, "target": action_button, "label": "%02d · TRANG BỊ" % (i + 1), "accent": accent, "default_position": action_rect.position, "default_scale": Vector2.ONE})
+			if first_action == null and can_activate:
+				first_action = action_button
+		var return_button := armory_return_button()
+		show_armory_layout_editor(armory_entries)
+		if first_action != null:
+			first_action.grab_focus()
+		else:
+			return_button.grab_focus()
 	else:
-		return_button.grab_focus()
+		# DRONES TAB
+		const DRONE_LIST: Array[Dictionary] = [
+			{
+				"id": "plasma", "name": "DRONE PLASMA", "type": "TẤN CÔNG LIÊN TỤC",
+				"desc": "Bay bọc lót theo phi công, xả đạn Plasma 14 DMG liên tục (CD: 0.65s). Xuyên phá giáp mục tiêu nhanh chóng.",
+				"icon": "🛸", "accent": Color("35e7ff"), "coin": 60, "shard": 10
+			},
+			{
+				"id": "scout", "name": "DRONE TRINH SÁT", "type": "QUÉT RADAR 360°",
+				"desc": "Định kỳ quét radar toàn màn hình, làm lộ diện điểm yếu khiến toàn bộ quái trong vùng chịu thêm +60% sát thương!",
+				"icon": "📡", "accent": Color("ff916d"), "coin": 75, "shard": 12
+			},
+			{
+				"id": "bomb", "name": "DRONE NÉM BOM", "type": "NỔ DIỆN RỘNG (AOE)",
+				"desc": "Mỗi 2.5s thả bom chùm nổ lan 45 DMG bán kính 90px quét sạch bầy quái áp sát. Gây chấn động làm chậm kẻ địch.",
+				"icon": "💣", "accent": Color("ff4d6d"), "coin": 90, "shard": 14
+			},
+			{
+				"id": "laser", "name": "DRONE SENTINEL", "type": "LASER XUNG NĂNG",
+				"desc": "Chiếu tia laser xuyên phá hội tụ liên tục lên quái gần nhất, thiêu đốt 22 DMG/giây không thể né tránh.",
+				"icon": "⚡", "accent": Color("b366ff"), "coin": 110, "shard": 16
+			},
+			{
+				"id": "support", "name": "DRONE NANO REPAIR", "type": "HỒI PHỤC KHIÊN",
+				"desc": "Tự động kích hoạt trường tái tạo nano, hồi phục +14 Khiên (hoặc +8 Máu) mỗi 3.6s giúp tăng khả năng sống sót tối đa.",
+				"icon": "🛡️", "accent": Color("88ffc9"), "coin": 120, "shard": 18
+			},
+		]
+		
+		var unlocked_drones: Array = game.profile.meta.get("unlocked_drones", [])
+		var first_drone_btn: Button = null
+		
+		for i in range(DRONE_LIST.size()):
+			var drone_info: Dictionary = DRONE_LIST[i]
+			var d_id: String = drone_info.id
+			var box := Rect2(64 + i * 232, 135, 218, 485)
+			var is_unlocked: bool = unlocked_drones.has(d_id) or (d_id == "plasma" and bool(game.profile.meta.get("has_drone", false)))
+			var is_selected: bool = is_unlocked and game.selected_drone == d_id and game.has_drone
+			var d_accent: Color = LED_PURPLE if is_selected else (drone_info.accent if is_unlocked else MUTED)
+			
+			panel(overlay, box, Color(0.04, 0.02, 0.08, 0.94), d_accent)
+			
+			var type_lbl := label(overlay, drone_info.type, Rect2(box.position.x + 8, box.position.y + 12, box.size.x - 16, 20), 11, drone_info.accent, true)
+			type_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+			type_lbl.clip_text = true
+			glow_panel(overlay, Rect2(box.position.x + 69, box.position.y + 38, 80, 80), Color(0.02, 0.04, 0.08, 0.95), drone_info.accent)
+			var icon_lbl := plain_label(overlay, drone_info.icon, Rect2(box.position.x + 69, box.position.y + 44, 80, 68), 44, drone_info.accent, true)
+			icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			
+			var name_lbl := label(overlay, drone_info.name, Rect2(box.position.x + 8, box.position.y + 126, box.size.x - 16, 26), 14, WHITE, true)
+			name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+			name_lbl.clip_text = true
+			accent_rule(overlay, Rect2(box.position.x + 20, box.position.y + 158, box.size.x - 40, 2), Color(d_accent.r, d_accent.g, d_accent.b, 0.5))
+			
+			var desc_lbl := label(overlay, drone_info.desc, Rect2(box.position.x + 12, box.position.y + 170, box.size.x - 24, 210), 12, Color("35e7ff") if is_selected else (WHITE if is_unlocked else MUTED))
+			desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			
+			var btn_rect := Rect2(box.position.x + 14, box.position.y + 412, box.size.x - 28, 52)
+			var btn_text: String
+			var btn_action: Callable
+			var btn_color: Color
+			var can_act: bool = true
+			if is_selected:
+				btn_text = "ĐANG DÙNG [BỎ]"
+				btn_color = LED_PURPLE
+				btn_action = func(): game.select_drone("")
+			elif is_unlocked:
+				btn_text = "CHỌN TRANG BỊ"
+				btn_color = CYAN
+				btn_action = (func(id: String): game.select_drone(id)).bind(d_id)
+			else:
+				var cost_coins: int = int(drone_info.coin)
+				var cost_shards: int = int(drone_info.shard)
+				can_act = coins_count >= cost_coins or shards_count >= cost_shards
+				btn_text = "MUA %d 🪙" % cost_coins
+				btn_color = Color("ffd700") if can_act else MUTED
+				btn_action = (func(id: String): game.unlock_drone(id)).bind(d_id)
+			
+			var act_btn := button(overlay, btn_text, btn_rect, btn_action, can_act, btn_color)
+			act_btn.add_theme_font_size_override("font_size", 15)
+			act_btn.name = "Armory_DroneCardButton_%s" % d_id
+			act_btn.focus_mode = Control.FOCUS_ALL
+			if not can_act:
+				act_btn.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN
+				act_btn.modulate = Color(1, 1, 1, 0.5)
+			if first_drone_btn == null and can_act:
+				first_drone_btn = act_btn
+				
+		var return_button := armory_return_button()
+		if first_drone_btn != null:
+			first_drone_btn.grab_focus()
+		else:
+			return_button.grab_focus()
 
 func armory_loadout_state(fixed_primary: bool, selected: bool, unlocked: bool) -> int:
 	if fixed_primary:
@@ -2348,7 +2754,7 @@ func armory_loadout_state(fixed_primary: bool, selected: bool, unlocked: bool) -
 		return WeaponLoadoutStateScript.State.AVAILABLE
 	return WeaponLoadoutStateScript.State.LOCKED
 
-func armory_loadout_text(state: int) -> String:
+func armory_loadout_text(state: int, can_buy_coins: bool = false) -> String:
 	match state:
 		WeaponLoadoutStateScript.State.AVAILABLE:
 			return "CHỌN TRANG BỊ"
@@ -2357,6 +2763,8 @@ func armory_loadout_text(state: int) -> String:
 		WeaponLoadoutStateScript.State.FIXED:
 			return "MẶC ĐỊNH"
 		_:
+			if can_buy_coins:
+				return "MUA · 50 🪙"
 			return "MỞ KHÓA · 8 MẢNH"
 
 

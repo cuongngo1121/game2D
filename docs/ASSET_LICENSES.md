@@ -38,13 +38,15 @@ tham chiếu. Ảnh tham chiếu không kèm thông tin giấy phép trong dự 
 phát hành game, cần xác minh quyền sử dụng thương mại/phân phối của ảnh gốc.
 Bản chỉnh tối không thay đổi quyền sở hữu hoặc điều kiện của ảnh nguồn.
 
-`assets/backgrounds/menu_resonance_console_v1.png` là nền menu runtime hiện
-tại, được tạo bằng ImageGen ngày 2026-09-13 theo brief NEON RESONANCE. Asset có
-nền sao tối, đường cộng hưởng tím/cyan, sàn lưới và năm khung hành động trống;
-text tiếng Việt, vùng focus/hover và hitbox hình chữ nhật vẫn do
-`scripts/ui/game_ui.gd` dựng ở runtime. Ảnh không chứa chữ, logo hay tài sản
-lấy từ game khác. Trước khi phát hành thương mại, cần kiểm tra lại điều khoản
-công cụ tạo ảnh và quyết định có giữ, vẽ lại hoặc thay thế asset này.
+`assets/backgrounds/menu_resonance_console_v1.png` được giữ làm artwork cũ/menu
+tham chiếu; không còn được nạp ở runtime.
+
+Sảnh chính hiện ghép các lớp `background/2 Background/1.png` đến `5.png` từ bộ
+Craftpix mới thêm; ảnh ghép `Background.png` được giữ làm bản tham chiếu. Các
+lớp tiền cảnh tự cuộn liên tục theo parallax trong runtime. Thư mục `background/`
+chứa giấy phép nguồn tại `background/license.txt` và liên kết
+`background/Free Assets Craftpix!.url`; cần xác nhận điều khoản Craftpix trước
+khi phát hành thương mại.
 
 `assets/backgrounds/armory_loadout_matrix_v1.png` là nền kho vũ khí runtime,
 được tạo bằng ImageGen ngày 2026-09-13 theo brief NEON RESONANCE. Asset có

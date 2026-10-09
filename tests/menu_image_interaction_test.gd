@@ -1,10 +1,15 @@
 extends SceneTree
-## Menu-art interaction contract: visual frames live in the image while the
-## only interactive surfaces are the matching transparent rectangular hitboxes.
+## Lobby interaction contract: controls render independently from the backdrop.
 
 const MainScene = preload("res://scenes/main.tscn")
 const VIEWPORT_RECT := Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
-const MENU_ART_PATH := "res://assets/backgrounds/menu_resonance_console_v1.png"
+const MENU_BASE_PATH := "res://background/2 Background/1.png"
+const MENU_LAYER_PATHS := [
+	"res://background/2 Background/2.png",
+	"res://background/2 Background/3.png",
+	"res://background/2 Background/4.png",
+	"res://background/2 Background/5.png",
+]
 const REMOVED_MENU_COPY := [
 	"CHECKPOINT SẴN SÀNG",
 	"CHƯA CÓ CHECKPOINT",
@@ -32,7 +37,17 @@ func _run() -> void:
 	await _frames(4)
 
 	var actions := _visible_menu_actions()
-	_check(_has_menu_art(), "Menu uses the new artwork containing the rendered action frames")
+	_check(_has_menu_background_layers(), "Menu uses all five newly added factory background layers")
+	_check(_actions_have_rendered_buttons(actions), "Menu actions keep visible button frames independently from the background")
+	var foreground_sprites: Array = game.ui.menu_background_layers[3].sprites
+	var foreground_position: float = foreground_sprites[0].position.x
+	var tile_width: float = game.ui.get_viewport().get_visible_rect().size.x
+	_check(is_equal_approx(foreground_sprites[1].position.x - foreground_position, tile_width), "Mirrored background tiles start edge-to-edge")
+	game.ui._animate_menu_background(0.5)
+	var first_scroll_position: float = foreground_sprites[0].position.x
+	game.ui._animate_menu_background(0.5)
+	_check(first_scroll_position < foreground_position and foreground_sprites[0].position.x < first_scroll_position, "Lobby background scrolls continuously in one direction")
+	_check(is_equal_approx(foreground_sprites[1].position.x - foreground_sprites[0].position.x, tile_width), "Background tiles stay edge-to-edge while scrolling")
 	_check(_has_no_secondary_menu_copy(), "Menu removes every circled secondary description and the footer status copy")
 	_check(actions.size() == 5, "Menu exposes exactly five artwork-aligned action hitboxes")
 	_check(_action_ids(actions) == ["continue", "new_run", "armory", "debug", "settings"], "Menu preserves the five intended action destinations in visual order")
@@ -122,11 +137,16 @@ func _action(actions: Array[Button], action_id: String) -> Button:
 			return action
 	return null
 
-func _has_menu_art() -> bool:
-	for child in game.ui.overlay.get_children():
-		if child is TextureRect and child.texture != null and child.texture.resource_path == MENU_ART_PATH:
-			return true
-	return false
+func _has_menu_background_layers() -> bool:
+	if game.ui.menu_background_base == null or game.ui.menu_background_base.texture.resource_path != MENU_BASE_PATH:
+		return false
+	if game.ui.menu_background_layers.size() != MENU_LAYER_PATHS.size():
+		return false
+	for index in range(MENU_LAYER_PATHS.size()):
+		var sprites: Array = game.ui.menu_background_layers[index].sprites
+		if sprites.size() != 2 or sprites[0].texture.resource_path != MENU_LAYER_PATHS[index] or not sprites[1].flip_h:
+			return false
+	return true
 
 func _has_no_secondary_menu_copy() -> bool:
 	for child in game.ui.overlay.get_children():
@@ -160,6 +180,13 @@ func _is_operable_art_region(action: Button) -> bool:
 		return false
 	var hitbox_rect := action.get_global_rect()
 	return hitbox_rect.size == action.size and hitbox_rect.has_point(hitbox_rect.get_center())
+
+func _actions_have_rendered_buttons(actions: Array[Button]) -> bool:
+	for action in actions:
+		var style := action.get_theme_stylebox("normal") as StyleBoxFlat
+		if style == null or style.bg_color.a <= 0.0 or action.get_theme_color("font_color").a <= 0.0:
+			return false
+	return true
 
 func _frames(count: int) -> void:
 	for frame in range(count):

@@ -236,7 +236,10 @@ func damage_enemy(id: int, amount: float) -> void:
 		if unit.id != id or unit.spawn_grace > 0.0 or unit.transition > 0.0:
 			continue
 		var multiplier: float = 1.6 if unit.exposed > 0.0 else 1.0
-		unit.hp = maxf(0.0, unit.hp - amount * multiplier)
+		var final_damage: float = amount * multiplier
+		unit.hp = maxf(0.0, unit.hp - final_damage)
+		if game != null and game.has_method("add_damage_number"):
+			game.add_damage_number(unit.pos, final_damage, unit.exposed > 0.0)
 		var starts_hurt_read: bool = unit.hurt_anim <= 0.0
 		unit.hit_flash = 0.12
 		if unit.boss:

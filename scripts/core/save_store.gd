@@ -46,8 +46,9 @@ const DEFAULT_SETTINGS: Dictionary = {
 	"music_enabled": true, "sfx_enabled": true, "settings_layout_positions": {}, "hud_layout": {}, "touch_layout": {}, "pause_layout": {}, "reward_layout": {}, "support_layout": {}, "armory_layout": {},
 }
 const DEFAULT_META: Dictionary = {
-	"shards": 0, "unlocked": ["pistol", "smg", "shotgun", "rail"],
-	"wins": 0, "runs": 0, "kills": 0, "starter": "smg",
+	"shards": 0, "coins": 0, "has_drone": false, "unlocked": ["pistol"],
+	"unlocked_drones": [], "selected_drone": "",
+	"wins": 0, "runs": 0, "kills": 0, "starter": "pistol",
 }
 
 # The optional path lets tests use an isolated user:// file, never the live profile.
@@ -243,9 +244,17 @@ func _normalize_profile(profile: Dictionary) -> Dictionary:
 			output["settings"]["armory_layout"].merge(normalized_armory_layout, true)
 	if profile.get("meta") is Dictionary:
 		var meta: Dictionary = profile["meta"]
-		for key: String in ["shards", "wins", "runs", "kills"]:
+		for key: String in ["shards", "coins", "wins", "runs", "kills"]:
 			if _integer_between(meta.get(key), 0, 1000000000):
 				output["meta"][key] = int(meta[key])
+		if meta.has("has_drone"):
+			output["meta"]["has_drone"] = bool(meta["has_drone"])
+		if meta.get("unlocked_drones") is Array:
+			for item: Variant in meta["unlocked_drones"]:
+				if item is String and _identifier(item) and not item in output["meta"]["unlocked_drones"]:
+					output["meta"]["unlocked_drones"].append(item)
+		if meta.get("selected_drone") is String and (_identifier(meta["selected_drone"]) or meta["selected_drone"] == ""):
+			output["meta"]["selected_drone"] = meta["selected_drone"]
 		if meta.get("unlocked") is Array:
 			for item: Variant in meta["unlocked"]:
 				if item is String and _identifier(item) and not item in output["meta"]["unlocked"]:

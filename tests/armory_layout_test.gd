@@ -80,6 +80,7 @@ func _run() -> void:
 
 	game.profile.meta.unlocked = ["pistol", "smg", "shotgun"]
 	game.profile.meta.shards = 0
+	game.coins = 0
 	game.starter = "shotgun"
 	game.profile.meta.starter = "shotgun"
 	game.ui.show_unlocks()

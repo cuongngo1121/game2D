@@ -100,11 +100,12 @@ hệ animation gameplay quyết định thời điểm hiển thị và thời l
 thái. Enemy death được render như hiệu ứng tách khỏi danh sách collision trong
 thời gian ngắn, nên việc hiển thị animation không trì hoãn phần thưởng hay wave.
 
-Menu chính dùng nền neon không gian tại `assets/backgrounds/menu_neon_space_dark.png`.
-Ảnh được làm tối từ ảnh nền do người dùng cung cấp để giữ vùng trung tâm đủ tối
-cho tiêu đề và ba nút `CHƠI`, `KHO VŨ KHÍ`, `CÀI ĐẶT` nổi bật. Nền dùng
-`KEEP_ASPECT_COVERED` nên tự lấp đầy cả màn hình 16:9 và màn hình rộng hơn;
-không cuộn theo `Camera2D` của gameplay.
+Sảnh chính ghép năm lớp nhà máy `background/2 Background/1.png` đến `5.png`
+(576×324, tỷ lệ 16:9) từ bộ asset Craftpix mới thêm. Bốn lớp tiền cảnh tự cuộn
+ngang liên tục ở tốc độ parallax khác nhau; mỗi lớp dùng cặp ảnh lật gương để
+nối vòng không giật. Nền được phủ tối nhẹ để giữ tiêu đề dễ đọc. Năm nút neon
+được dựng riêng trong `scripts/ui/game_ui.gd`. Chỉ sảnh chính dùng các lớp này;
+nền map và gameplay không thay đổi.
 
 ## Âm thanh thực
 

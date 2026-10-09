@@ -59,7 +59,7 @@ func update(delta: float) -> void:
 				var offset = Vector2.from_angle(game.elapsed * 4.5 + i * TAU / 3) * 64
 				var center = game.player.position + offset
 				if game.has_line_of_sight(game.player.position, center):
-					game.enemies.damage_in_radius(center, 23, definition("orbit").damage)
+					game.enemies.damage_in_radius(center, 23, definition("orbit").damage * damage_mult())
 					game.projectiles.erase_in_radius(center, 16)
 	var direction: Vector2 = game.controls.aim_direction(game.player.position)
 	if game.settings.get("auto_aim", true) and (game.controls.is_touch or not game.controls.mouse_aim_active):
@@ -108,7 +108,7 @@ func fire() -> bool:
 				"phase": game.elapsed * 4.0 + shot_index * 0.41})
 			for enemy in game.enemies.units.duplicate():
 				if Geometry2D.get_closest_point_to_segment(enemy.pos, start, finish).distance_to(enemy.pos) < float(enemy.radius) + 5:
-					game.enemies.damage_enemy(enemy.id, weapon.damage)
+					game.enemies.damage_enemy(enemy.id, weapon.damage * damage_mult())
 		"disc":
 			bullet(weapon, direction, "disc", 8 + piercing, 0, 1.0, 10)
 		"arc":
@@ -122,7 +122,7 @@ func fire() -> bool:
 				beam_lines.append({"from": previous, "to": target.pos, "time": 0.23, "duration": 0.23,
 					"age": 0.0, "color": primary, "accent": accent, "style": visual,
 					"phase": game.elapsed * 7.0 + i * 1.9 + shot_index * 0.37})
-				game.enemies.damage_enemy(target.id, float(weapon.damage) * pow(0.83, i))
+				game.enemies.damage_enemy(target.id, float(weapon.damage) * pow(0.83, i) * damage_mult())
 				previous = target.pos
 				target = {}
 				var distance_limit: float = 145.0 + int(game.upgrades.get("chain", 0)) * 25
@@ -147,7 +147,7 @@ func fire() -> bool:
 			game.projectiles.erase_in_radius(center, 58)
 			for enemy in game.enemies.units.duplicate():
 				if enemy.pos.distance_to(center) < 64 + enemy.radius and game.has_line_of_sight(game.player.position, enemy.pos):
-					game.enemies.damage_enemy(enemy.id, weapon.damage)
+					game.enemies.damage_enemy(enemy.id, float(weapon.damage) * damage_mult())
 		"chord":
 			for i in range(3):
 				sequence.append({"weapon": weapon, "direction": direction.rotated((i - 1) * 0.15), "speed_factor": 1.0 + i * 0.14})
@@ -161,11 +161,14 @@ func bullet(weapon: Dictionary, direction: Vector2, behavior: String, pierce: in
 	var primary: Color = _visual_color(weapon, "visual_color", "67b9d4")
 	var accent: Color = _visual_color(weapon, "visual_accent", "e6f7ff")
 	game.projectiles.spawn({"pos": game.player.weapon_projectile_spawn_position(), "vel": direction * speed,
-		"damage": float(weapon.damage), "enemy": false, "radius": bullet_radius,
+		"damage": float(weapon.damage) * damage_mult(), "enemy": false, "radius": bullet_radius,
 		"life": float(weapon.range) / maxf(speed, 1.0), "color": primary, "accent": accent,
 		"trail_color": Color(primary, 0.52), "visual": visual, "weapon_id": str(weapon.id),
 		"phase": game.elapsed * 5.0 + shot_index * 0.37,
 		"pierce": pierce, "bounces": bounces, "behavior": behavior, "clearable": true})
+
+func damage_mult() -> float:
+	return 1.0 + 0.15 * int(game.upgrades.get("damage", 0)) if (game != null and "upgrades" in game) else 1.0
 
 func _visual_color(weapon: Dictionary, key: String, fallback: String) -> Color:
 	return Color(str(weapon.get(key, fallback)))

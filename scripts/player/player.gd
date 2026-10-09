@@ -261,8 +261,10 @@ func stacks(id: String) -> int:
 	return int(game.upgrades.get(id, 0))
 
 func refresh_stats() -> void:
+	max_hp = 100.0 + 25.0 * stacks("health")
 	max_shield = 50.0 + 20.0 * stacks("shield")
 	max_energy = 100.0 + 30.0 * stacks("energy")
+	hp = minf(hp, max_hp)
 	shield = minf(shield, max_shield)
 	energy = minf(energy, max_energy)
 
