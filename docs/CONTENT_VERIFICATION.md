@@ -14,7 +14,7 @@ Pulse Burst +30 sát thương/+32 px bán kính mỗi tầng.
 
 | Kiểm tra | Bằng chứng |
 | --- | --- |
-| Số lượng nội dung và ID | 12 vũ khí, 13 nâng cấp, 10 địch thường, 5 màn, 5 boss có tên riêng; ID không trùng. |
+| Số lượng nội dung và ID | 12 vũ khí, 13 nâng cấp, 13 địch thường (gồm 3 elite sau khoảng nghỉ), 5 màn, 5 boss có tên riêng; ID không trùng. |
 | Tương thích nâng cấp | Tất cả ID trong `compatible` trỏ tới vũ khí có thật; Pistol dùng 0 năng lượng; mọi icon/sprite/SFX được tham chiếu tồn tại. |
 | Đường đi và vật cản | 20 layouts (15 phòng + 5 arena) × 2 bán kính 11/15 px = 40 trường hợp; mọi ô sàn trống trên lưới 8 px kết nối với điểm gần spawn `(130,350)`; đi được tới `(1152,352)`. |
 | Lane cửa | Kiểm tra x = 114/120/130/1150 trên đoạn y = 200..500; không có vật cản lấn lane khi đã nới theo radius. |

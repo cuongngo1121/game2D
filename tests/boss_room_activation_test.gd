@@ -48,7 +48,15 @@ func _run() -> void:
 		_check(not game.combat_active and game.enemies.living_count() == 0, "Area %d corridor entry does not spawn or lock the boss" % (stage + 1))
 		game.player.position = centre
 		game.update_route_exploration()
-		_check(game.combat_active and game.enemies.living_count() == 1, "Area %d starts the boss only after the player reaches its chamber" % (stage + 1))
+		_check(game.state == "boss_briefing" and not game.combat_active and game.enemies.living_count() == 0, "Area %d shows the boss warning before spawning the boss" % (stage + 1))
+		var warning_label := game.ui.overlay.get_node_or_null("BossBriefingWarning") as Label
+		_check(warning_label != null and warning_label.text.contains(str(game.content.stages[stage].boss_warning)), "Area %d briefing includes its boss-specific skill warning" % (stage + 1))
+		_check(not str(game.content.stages[stage].boss_counter).is_empty(), "Area %d briefing includes counterplay advice" % (stage + 1))
+		var confirm_button := game.ui.overlay.get_node_or_null("BossBriefing_ConfirmButton") as Button
+		_check(confirm_button != null, "Area %d briefing exposes a start-fight button" % (stage + 1))
+		if confirm_button != null:
+			confirm_button.emit_signal("pressed")
+		_check(game.combat_active and game.enemies.living_count() == 1, "Area %d starts the boss after the player confirms the briefing" % (stage + 1))
 		if game.enemies.living_count() == 1:
 			var boss: Dictionary = game.enemies.units[0]
 			_check(boss.boss and boss.pos.distance_to(centre) < 1.0, "Area %d boss spawns at the authored chamber centre" % (stage + 1))

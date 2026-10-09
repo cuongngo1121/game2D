@@ -22,6 +22,11 @@ var hint_label: Label
 var boss_label: Label
 var coin_label: Label
 var shop_button: Button
+var tutorial_panel: Panel
+var tutorial_label: Label
+var tutorial_skip_button: Button
+var tutorial_displayed_step: int = -1
+var campaign_difficulty_buttons: Dictionary = {}
 var bars: Dictionary = {}
 var beat_display: Control
 var minimap: Control
@@ -427,6 +432,7 @@ func background_texture(parent: Node, path: String, stretch_mode: int = TextureR
 func clear_overlay() -> void:
 	menu_background_layers.clear()
 	menu_background_base = null
+	campaign_difficulty_buttons.clear()
 	settings_layout_editor = null
 	settings_layout_groups.clear()
 	armory_layout_editor = null
@@ -669,6 +675,22 @@ func build_hud() -> void:
 	boss_label = plain_label(boss_group, "", Rect2(0, 16, 512, 23), 16, CORAL, true)
 	boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	create_bar("boss", Rect2(6, 4, 500, 6), CORAL, boss_group)
+	tutorial_panel = Panel.new()
+	tutorial_panel.name = "Campaign_TutorialPanel"
+	tutorial_panel.position = Vector2(306, 611)
+	tutorial_panel.size = Vector2(668, 76)
+	tutorial_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tutorial_style := panel_style(Color(0.015, 0.025, 0.07, 0.94), CYAN, 1)
+	tutorial_style.shadow_color = Color(CYAN.r, CYAN.g, CYAN.b, 0.28)
+	tutorial_style.shadow_size = 8
+	tutorial_panel.add_theme_stylebox_override("panel", tutorial_style)
+	hud.add_child(tutorial_panel)
+	tutorial_label = plain_label(tutorial_panel, "", Rect2(18, 9, 548, 58), 15, WHITE)
+	tutorial_label.name = "Campaign_TutorialText"
+	tutorial_skip_button = button(tutorial_panel, "BỎ QUA", Rect2(566, 17, 88, 42), func(): skip_campaign_tutorial(), false, MUTED)
+	tutorial_skip_button.name = "Campaign_TutorialSkipButton"
+	tutorial_skip_button.add_theme_font_size_override("font_size", 11)
+	tutorial_panel.visible = false
 	# The rhythm clock remains active for combat logic; only its decorative HUD
 	# marker is removed from this screen.
 	beat_display = null
@@ -1017,13 +1039,14 @@ func _process(_delta: float) -> void:
 		return
 	if game.state == "menu":
 		_animate_menu_background(_delta)
-	hud.visible = game.state not in ["menu", "game_over", "victory", "unlocks"]
+	hud.visible = game.state not in ["menu", "game_over", "victory", "unlocks", "area_transition"]
 	if hud_layout_editor != null and game.state != "playing" and hud_layout_editor.is_editor_active():
 		hud_layout_editor.set_editor_active(false)
 	if pause_layout_editor != null and is_instance_valid(pause_layout_editor) and game.state != "paused" and pause_layout_editor.is_editor_active():
 		pause_layout_editor.set_editor_active(false)
 	if not hud.visible:
 		return
+	sync_campaign_tutorial()
 	refresh_runtime_audio_controls()
 	var demo_visible: bool = game.is_assignment_demo() and game.state == "playing"
 	for control in demo_controls:
@@ -1079,7 +1102,7 @@ func show_menu() -> void:
 	var continue_action = menu_image_action("continue", "TIẾP TỤC", 0, game.continue_run, CYAN, not has_checkpoint)
 	# Starting over discards only the active run, so retain the explicit
 	# confirmation instead of silently replacing a recoverable checkpoint.
-	var new_run_action: Callable = confirm_new_run if has_checkpoint else game.new_run
+	var new_run_action: Callable = confirm_new_run if has_checkpoint else show_campaign_intro
 	var new_run = menu_image_action("new_run", "LƯỢT MỚI", 1, new_run_action, LED_PURPLE)
 	menu_image_action("armory", "TRANG BỊ", 2, show_unlocks, CYAN)
 	menu_image_action("debug", "KHU VỰC DEBUG", 3, show_debug_zones, LED_PURPLE)
@@ -1091,6 +1114,138 @@ func show_menu() -> void:
 
 func menu_action_rect(index: int) -> Rect2:
 	return Rect2(MENU_ACTION_ORIGIN + Vector2(0.0, index * (MENU_ACTION_SIZE.y + MENU_ACTION_GAP)), MENU_ACTION_SIZE)
+
+func show_campaign_intro() -> void:
+	clear_overlay()
+	_add_menu_background_layers()
+	var veil := ColorRect.new()
+	veil.color = Color(0.008, 0.004, 0.035, 0.6)
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(veil)
+	panel(overlay, Rect2(112, 164, 1056, 440), Color(0.015, 0.022, 0.065, 0.94), CYAN)
+	var chapter := plain_label(overlay, "HỒI I · TÍN HIỆU ĐẦU TIÊN", Rect2(160, 192, 960, 22), 14, LED_PURPLE, true)
+	chapter.name = "Campaign_ChapterLabel"
+	var heading := led_label(overlay, "NOCTIS ĐÃ IM LẶNG", Rect2(160, 222, 960, 45), 32, CYAN, true)
+	heading.name = "Campaign_StoryTitle"
+	var story := plain_label(overlay, "NOCTIS từng giữ năm vùng cộng hưởng trong cùng một nhịp. THE SILENCE đã cắt đường truyền, biến các trạm thành ổ phát tín hiệu địch. Phi công, vũ khí còn lại và drone đồng hành là hy vọng cuối cùng để khôi phục mạng lưới.", Rect2(160, 278, 960, 84), 18, WHITE)
+	story.name = "Campaign_StoryBody"
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var objective := plain_label(overlay, "NHIỆM VỤ · Thu hồi năm lớp nhạc, đánh bại kẻ giữ vùng và đánh thức lõi SILENT CORE.", Rect2(160, 374, 960, 27), 16, Color("ffd166"), true)
+	objective.name = "Campaign_Objective"
+	var route_names := PackedStringArray()
+	for stage: Dictionary in game.content.stages:
+		route_names.append(str(stage.get("name", "UNKNOWN")))
+	var route := plain_label(overlay, "ĐƯỜNG TRUYỀN   " + "  →  ".join(route_names), Rect2(160, 410, 960, 34), 14, CYAN, true)
+	route.name = "Campaign_Route"
+	var controls := plain_label(overlay, "DI CHUYỂN  WASD / CẦN TRÁI · BẮN  CHUỘT / NÚT BẮN · DASH  SPACE / NÚT DASH\nE  TƯƠNG TÁC · TAB  ĐỔI VŨ KHÍ · B  MỞ CỬA HÀNG KHI AN TOÀN", Rect2(160, 432, 960, 42), 13, MUTED)
+	controls.name = "Campaign_ControlsGuide"
+	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var difficulty_title := plain_label(overlay, "ĐỘ KHÓ", Rect2(160, 482, 100, 26), 14, WHITE, true)
+	difficulty_title.name = "Campaign_DifficultyLabel"
+	var difficulty_options: Array[Dictionary] = [
+		{"id": "easy", "text": "DỄ", "rect": Rect2(270, 478, 150, 38), "accent": CYAN},
+		{"id": "normal", "text": "THƯỜNG", "rect": Rect2(430, 478, 150, 38), "accent": LED_PURPLE},
+		{"id": "hard", "text": "KHÓ", "rect": Rect2(590, 478, 150, 38), "accent": CORAL},
+	]
+	for option: Dictionary in difficulty_options:
+		var mode: String = str(option.id)
+		var is_selected: bool = game.difficulty_mode == mode
+		var accent: Color = option.accent if is_selected else MUTED
+		var select_action := Callable(self, "select_campaign_difficulty").bind(mode)
+		var option_button := button(overlay, str(option.text), option.rect, select_action, is_selected, accent)
+		option_button.name = "Campaign_Difficulty_%s" % mode.capitalize()
+		option_button.add_theme_font_size_override("font_size", 13)
+		campaign_difficulty_buttons[mode] = option_button
+	var difficulty_hint := plain_label(overlay, "Dễ thở hơn · Thường cân bằng · Khó: địch nhiều máu, đau hơn, nhanh và tấn công dồn dập", Rect2(160, 518, 960, 19), 12, MUTED)
+	difficulty_hint.name = "Campaign_DifficultyHint"
+	var start_button := button(overlay, "BẮT ĐẦU CHIẾN DỊCH", Rect2(370, 544, 300, 48), game.new_run, true, CYAN)
+	start_button.name = "Campaign_StartButton"
+	start_button.add_theme_font_size_override("font_size", 16)
+	start_button.grab_focus()
+	var skip_button := button(overlay, "BỎ QUA", Rect2(698, 544, 190, 48), game.new_run, false, MUTED)
+	skip_button.name = "Campaign_SkipButton"
+	skip_button.add_theme_font_size_override("font_size", 15)
+
+func select_campaign_difficulty(mode: String) -> void:
+	if not ["easy", "normal", "hard"].has(mode):
+		return
+	game.difficulty_mode = mode
+	game.settings["difficulty"] = mode
+	show_campaign_intro()
+
+func show_boss_briefing(stage_index: int) -> void:
+	clear_overlay()
+	var stage: Dictionary = game.content.stages[stage_index]
+	var veil := ColorRect.new()
+	veil.color = Color(0.004, 0.008, 0.025, 0.82)
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(veil)
+	panel(overlay, Rect2(150, 128, 980, 464), Color(0.02, 0.025, 0.075, 0.97), Color("ff846f"))
+	var kicker := plain_label(overlay, "CẢNH BÁO · TÍN HIỆU BOSS", Rect2(200, 158, 880, 24), 15, Color("ff846f"), true)
+	kicker.name = "BossBriefingKicker"
+	var name := led_label(overlay, str(stage.get("boss", "UNKNOWN")), Rect2(200, 190, 880, 50), 34, Color("ff846f"), true)
+	name.name = "BossBriefingName"
+	var stage_name := plain_label(overlay, "%s · %s" % [str(stage.get("name", "")), str(stage.get("subtitle", ""))], Rect2(200, 244, 880, 24), 15, CYAN, true)
+	stage_name.name = "BossBriefingStage"
+	var warning := plain_label(overlay, "KỸ NĂNG\n%s" % str(stage.get("boss_warning", "Đòn đánh có vệt báo trước; quan sát và né khỏi vùng nguy hiểm.")), Rect2(200, 294, 880, 76), 18, WHITE, true)
+	warning.name = "BossBriefingWarning"
+	warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var counter := plain_label(overlay, "CÁCH ĐỐI PHÓ\n%s" % str(stage.get("boss_counter", "Giữ di chuyển và dash khỏi vệt báo trước.")), Rect2(200, 386, 880, 76), 17, MUTED)
+	counter.name = "BossBriefingCounter"
+	counter.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var confirm := button(overlay, "ĐÃ RÕ · VÀO ĐẤU", Rect2(430, 500, 420, 58), game.confirm_boss_briefing, true, Color("ff846f"))
+	confirm.name = "BossBriefing_ConfirmButton"
+	confirm.add_theme_font_size_override("font_size", 17)
+	confirm.grab_focus()
+
+func show_area_transition(previous_stage_index: int, next_stage_index: int) -> void:
+	clear_overlay()
+	var previous_stage: Dictionary = game.content.stages[previous_stage_index]
+	var next_stage: Dictionary = game.content.stages[next_stage_index]
+	background_texture(overlay, REWARD_BACKGROUND, TextureRect.STRETCH_SCALE)
+	var veil := ColorRect.new()
+	veil.color = Color(0.008, 0.012, 0.04, 0.6)
+	veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(veil)
+	panel(overlay, Rect2(132, 152, 1016, 424), Color(0.015, 0.022, 0.065, 0.96), CYAN)
+	var recovered := plain_label(overlay, "%s · LỚP NHẠC %d / 5 ĐÃ ĐƯỢC KHÔI PHỤC" % [str(previous_stage.get("name", "")), previous_stage_index + 1], Rect2(184, 187, 912, 26), 15, Color("ffd166"), true)
+	recovered.name = "AreaTransition_Progress"
+	var destination := led_label(overlay, "%s · %s" % [str(next_stage.get("name", "")), str(next_stage.get("subtitle", ""))], Rect2(184, 226, 912, 48), 29, CYAN, true)
+	destination.name = "AreaTransition_Title"
+	var story := plain_label(overlay, str(next_stage.get("transition_story", next_stage.get("description", "Tín hiệu kế tiếp đang chờ."))), Rect2(184, 300, 912, 76), 19, WHITE)
+	story.name = "AreaTransition_Story"
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var objective := plain_label(overlay, "MỤC TIÊU TIẾP THEO · %s" % str(next_stage.get("description", "")), Rect2(184, 396, 912, 70), 16, MUTED)
+	objective.name = "AreaTransition_Objective"
+	objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var continue_button := button(overlay, "ĐI TỚI KHU VỰC TIẾP THEO", Rect2(390, 492, 500, 58), game.confirm_area_transition, true, CYAN)
+	continue_button.name = "AreaTransition_ContinueButton"
+	continue_button.add_theme_font_size_override("font_size", 17)
+	continue_button.grab_focus()
+
+func sync_campaign_tutorial() -> void:
+	if tutorial_panel == null or not is_instance_valid(tutorial_panel):
+		return
+	var tutorial_active: bool = game.state == "playing" and not game.debug_session and game.stage_index == 0 and game.room_index == 0 and game.tutorial_step < 4
+	tutorial_panel.visible = tutorial_active
+	if not tutorial_active or tutorial_displayed_step == game.tutorial_step:
+		return
+	var prompts: Array[String] = [
+		"HƯỚNG DẪN 1/4 · DI CHUYỂN\nWASD hoặc cần trái: rời điểm rơi và dò tín hiệu gần nhất.",
+		"HƯỚNG DẪN 2/4 · TẤN CÔNG\nChuột trái hoặc nút BẮN: hạ tín hiệu địch để mở đường.",
+		"HƯỚNG DẪN 3/4 · DASH\nSPACE hoặc nút DASH: lướt né đòn. Canh nhịp để đạt Perfect Dash.",
+		"HƯỚNG DẪN 4/4 · TIẾN TRÌNH\nDọn sạch địch, đi qua cổng; nhấn E tại cổng hoặc trạm để tương tác.",
+	]
+	tutorial_displayed_step = game.tutorial_step
+	tutorial_label.text = prompts[game.tutorial_step]
+
+func skip_campaign_tutorial() -> void:
+	game.tutorial_step = 4
+	game.tutorial_timer = 0.0
+	tutorial_panel.visible = false
 
 func _add_menu_background_layers() -> void:
 	menu_background_time = 0.0
@@ -1165,7 +1320,7 @@ func confirm_new_run() -> void:
 	label(overlay, "Bắt đầu lượt mới?", Rect2(380, 250, 520, 48), 29, WHITE, true)
 	label(overlay, "Checkpoint của lượt đang dở sẽ được thay thế. Cài đặt và nội dung đã mở khóa vẫn được giữ.", Rect2(380, 310, 510, 84), 21, MUTED)
 	button(overlay, "Giữ lượt đang dở", Rect2(378, 426, 241, 52), show_menu).grab_focus()
-	button(overlay, "Bắt đầu lượt mới", Rect2(632, 426, 270, 52), game.new_run, true)
+	button(overlay, "Bắt đầu lượt mới", Rect2(632, 426, 270, 52), show_campaign_intro, true)
 
 func modal_header(title: String, subtitle: String = "") -> void:
 	clear_overlay()

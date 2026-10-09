@@ -108,11 +108,14 @@ func _test_menu_checkpoint_actions() -> void:
 	var confirm_button := _visible_menu_button("Bắt đầu lượt mới")
 	if confirm_button != null:
 		confirm_button.emit_signal("pressed")
+	var campaign_start := _visible_menu_button("BẮT ĐẦU CHIẾN DỊCH")
+	if campaign_start != null:
+		campaign_start.emit_signal("pressed")
 	_check(game.state == "playing" and game.profile.checkpoint != recoverable_checkpoint, "Confirmed new run replaces the old checkpoint only after explicit consent")
 	game.return_to_menu()
 	game.profile.checkpoint = {}
 	game.ui.show_menu()
-	_check(_visible_menu_button("CHƠI") != null and _visible_menu_button("LƯỢT MỚI") == null, "Fresh menu keeps the compact new-player start path")
+	_check(_visible_menu_button("LƯỢT MỚI") != null, "Fresh menu offers a new campaign that opens the prologue")
 
 func _sandbox() -> void:
 	game.new_run(77991)
@@ -458,6 +461,8 @@ func _enter_route_room(destination: int) -> void:
 	if destination == 5 and game.boss_chamber_pending:
 		game.player.position = game.boss_spawn_position()
 		game.update_route_exploration()
+		if game.state == "boss_briefing":
+			game.confirm_boss_briefing()
 
 func _use_boss_exit_portal() -> void:
 	var gate: Dictionary = game.boss_exit_portal()
@@ -472,6 +477,8 @@ func _use_boss_exit_portal() -> void:
 	game._physics_process(0.1)
 	game.player.position = gate.pos
 	game._physics_process(0.1)
+	if game.state == "area_transition":
+		game.confirm_area_transition()
 
 func _test_level_one_backtracking() -> void:
 	game.new_run(884477)
@@ -590,6 +597,9 @@ func _test_later_room_combat_lifecycle() -> void:
 	game.combat_active = false
 	game.cleared = [0, 1, 2, 3, 4]
 	game.enter_room(5)
+	game.start_boss_encounter()
+	_check(game.state == "boss_briefing" and game.enemies.units.is_empty(), "Direct boss-room entry presents its briefing before combat")
+	game.confirm_boss_briefing()
 	_check(game.room_index == 5 and game.combat_active and game.enemies.units.size() == 1 and game.enemies.units[0].boss, "Opened boss room creates its active boss encounter")
 	var boss := _advance_live_encounter(7.0)
 	_check(boss.attacked, "Boss receives beats and starts a boss attack pattern")

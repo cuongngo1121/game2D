@@ -82,6 +82,43 @@ const BOSS_ANIMATION_CONFIG := {
 	"hurt": {"frames": 3, "fps": 10.0, "loop": false},
 	"death": {"frames": 6, "fps": 8.0, "loop": false},
 }
+const REST_ENEMY_ANIMATIONS := {
+	"rest_vanguard": {
+		"frame_size": 96.0, "display_size": 72.0,
+		"animations": {
+			"idle": {"path": "res://enemies/1/Idle.png", "frames": 4, "fps": 6.0, "loop": true},
+			"move": {"path": "res://enemies/1/Run.png", "frames": 6, "fps": 10.0, "loop": true},
+			"attack": {"path": "res://enemies/1/Attack.png", "frames": 6, "fps": 12.0, "loop": false},
+			"hurt": {"path": "res://enemies/1/Hurt.png", "frames": 2, "fps": 10.0, "loop": false},
+			"death": {"path": "res://enemies/1/Death.png", "frames": 6, "fps": 8.0, "loop": false},
+		},
+	},
+	"rest_gas_brute": {
+		"frame_size": 96.0, "display_size": 72.0,
+		"animations": {
+			"idle": {"path": "res://enemies/2/Idle.png", "frames": 6, "fps": 6.0, "loop": true},
+			"move": {"path": "res://enemies/2/Drive.png", "frames": 6, "fps": 9.0, "loop": true},
+			"attack": {"path": "res://enemies/2/Gas_Sycle.png", "frames": 8, "fps": 12.0, "loop": false},
+			"hurt": {"path": "res://enemies/2/Hurt.png", "frames": 2, "fps": 10.0, "loop": false},
+			"death": {"path": "res://enemies/2/Death.png", "frames": 4, "fps": 8.0, "loop": false},
+		},
+	},
+	"rest_siege_tank": {
+		"frame_size": 96.0, "display_size": 76.0,
+		"animations": {
+			"idle": {"path": "res://enemies/3/Idle.png", "frames": 4, "fps": 6.0, "loop": true},
+			"move": {"path": "res://enemies/3/Walk.png", "frames": 6, "fps": 8.0, "loop": true},
+			"attack": {"path": "res://enemies/3/Attack.png", "frames": 6, "fps": 12.0, "loop": false},
+			"hurt": {"path": "res://enemies/3/Hurt.png", "frames": 2, "fps": 10.0, "loop": false},
+			"death": {"path": "res://enemies/3/Death.png", "frames": 6, "fps": 8.0, "loop": false},
+		},
+	},
+}
+const DIFFICULTY_PROFILES := {
+	"easy": {"health": 0.78, "damage": 0.75, "speed": 0.90, "attack_interval": 1.25},
+	"normal": {"health": 1.0, "damage": 1.0, "speed": 1.0, "attack_interval": 1.0},
+	"hard": {"health": 1.45, "damage": 1.30, "speed": 1.12, "attack_interval": 0.80},
+}
 const BOSS_ANIMATION_IDS := {"boss0": "conductor_01", "boss1": "subwoofer", "boss2": "choir_widow", "boss3": "refractor", "boss4": "null_maestro"}
 const STAGE_ROSTERS = [
 	["drone", "fan", "skirmisher"],
@@ -99,7 +136,10 @@ const DEFAULTS = {
 	"sniper": {"hp": 64.0, "speed": 25.0, "attack_beats": 8},
 	"spiral": {"hp": 90.0, "speed": 28.0, "attack_beats": 6},
 	"warden": {"hp": 125.0, "speed": 30.0, "attack_beats": 8},
-	"skirmisher": {"hp": 62.0, "speed": 94.0, "attack_beats": 5}}
+	"skirmisher": {"hp": 62.0, "speed": 94.0, "attack_beats": 5},
+	"rest_vanguard": {"hp": 94.0, "speed": 76.0, "damage": 14.0, "attack_beats": 5, "radius": 21.0},
+	"rest_gas_brute": {"hp": 132.0, "speed": 31.0, "damage": 16.0, "attack_beats": 7, "radius": 25.0},
+	"rest_siege_tank": {"hp": 164.0, "speed": 22.0, "damage": 17.0, "attack_beats": 8, "radius": 25.0}}
 
 var game
 var units: Array[Dictionary] = []
@@ -136,6 +176,13 @@ func setup(owner_game) -> void:
 		for animation_name in ENEMY_ANIMATION_CONFIG:
 			var config: Dictionary = ENEMY_ANIMATION_CONFIG[animation_name]
 			var animation_path: String = PIXEL_ENEMY_ANIMATION_DIR + "enemy_%s_%s_%dx32.png" % [kind, animation_name, int(config.frames)]
+			if ResourceLoader.exists(animation_path):
+				_animation_textures["%s:%s" % [kind, animation_name]] = load(animation_path)
+	for kind: String in REST_ENEMY_ANIMATIONS:
+		var asset_config: Dictionary = REST_ENEMY_ANIMATIONS[kind]
+		for animation_name: String in asset_config.animations:
+			var animation: Dictionary = asset_config.animations[animation_name]
+			var animation_path: String = str(animation.path)
 			if ResourceLoader.exists(animation_path):
 				_animation_textures["%s:%s" % [kind, animation_name]] = load(animation_path)
 	for i in range(5):
@@ -179,6 +226,23 @@ func spawn_room(stage: int, room_index: int, boss: bool, seed_value: int) -> voi
 	else:
 		_waves_left = 3 if stage < 3 else 4
 		_start_wave()
+
+func spawn_rest_elite(kind: String) -> bool:
+	if _boss_room or not REST_ENEMY_ANIMATIONS.has(kind):
+		return false
+	_spawn(kind, _spawn_position(-1), false)
+	return true
+
+func is_rest_elite_kind(kind: String) -> bool:
+	return REST_ENEMY_ANIMATIONS.has(kind)
+
+func choose_rest_elite_kind(seed_value: int) -> String:
+	var kinds: Array[String] = []
+	for kind: String in REST_ENEMY_ANIMATIONS:
+		kinds.append(kind)
+	var selection_rng := RandomNumberGenerator.new()
+	selection_rng.seed = seed_value
+	return kinds[selection_rng.randi_range(0, kinds.size() - 1)]
 
 func spawn_debug_wave(stage: int, room_index: int, seed_value: int) -> void:
 	# Debug Map needs the same roster, spawn safety, warning and first-wave size
@@ -461,9 +525,11 @@ func _spawn(kind: String, pos: Vector2, boss: bool, summoner: int = -1) -> void:
 	for config in game.content.get("enemies", []):
 		if config.get("id", "") == kind:
 			stats.merge(config, true)
-	var max_hp: float = float(stats.get("hp", 60.0)) * (1.0 + _stage * 0.15)
+	var difficulty_id: String = str(game.difficulty_mode if game != null and "difficulty_mode" in game else "normal")
+	var difficulty: Dictionary = DIFFICULTY_PROFILES.get(difficulty_id, DIFFICULTY_PROFILES["normal"])
+	var max_hp: float = float(stats.get("hp", 60.0)) * (1.0 + _stage * 0.15) * float(difficulty.health)
 	if boss:
-		max_hp = float(stats.get("boss_hp", 1100.0 + _stage * 300.0))
+		max_hp = float(stats.get("boss_hp", 1100.0 + _stage * 300.0)) * float(difficulty.health)
 		var stages: Array = game.content.get("stages", [])
 		if _stage < stages.size():
 			stats["name"] = stages[_stage].get("boss", kind.to_upper())
@@ -478,12 +544,15 @@ func _spawn(kind: String, pos: Vector2, boss: bool, summoner: int = -1) -> void:
 	elif boss and kind == "boss4":
 		boss_speed += BOSS_NULL_MAESTRO_SPEED_BONUS
 		boss_attack_beats = BOSS_NULL_MAESTRO_ATTACK_BEATS
+	var base_speed: float = float(stats.get("speed", 35.0)) if not boss else boss_speed
+	var base_damage: float = float(stats.get("damage", 12.0 + _stage * 2.0))
+	var base_attack_beats: int = int(stats.get("attack_beats", 8)) if not boss else boss_attack_beats
 	units.append({"id": _next_id, "kind": kind, "pos": pos, "hp": max_hp, "max_hp": max_hp,
 		"radius": radius, "boss": boss, "phase": 1, "name": stats.get("name", kind.to_upper()),
-		"speed": float(stats.get("speed", 35.0)) if not boss else boss_speed,
-		"damage": float(stats.get("damage", 12.0 + _stage * 2.0)),
+		"speed": base_speed * float(difficulty.speed),
+		"damage": base_damage * float(difficulty.damage),
 		"bullet_speed": float(stats.get("bullet_speed", 155.0 + _stage * 9.0)),
-		"attack_beats": int(stats.get("attack_beats", 8)) if not boss else boss_attack_beats,
+		"attack_beats": maxi(2, int(round(float(base_attack_beats) * float(difficulty.attack_interval)))),
 		"spawn_grace": _warning_time(), "hit_flash": 0.0, "transition": 0.0,
 		"exposed": 0.0, "contact_cd": 0.0, "charge_left": 0.0, "charge_dir": Vector2.ZERO,
 		"path": [], "path_age": 0.0, "stuck": 0.0, "last_pos": pos,
@@ -529,7 +598,7 @@ func _move_unit(unit: Dictionary, delta: float) -> void:
 	var to_player: Vector2 = game.player.position - unit.pos
 	var distance: float = to_player.length()
 	var direction := Vector2.ZERO
-	if unit.kind == "drone" or unit.kind == "charger":
+	if unit.kind in ["drone", "charger", "rest_vanguard"]:
 		direction = to_player.normalized()
 	elif unit.boss:
 		# All bosses keep the player inside a pressure ring instead of passively
@@ -631,6 +700,14 @@ func _regular_attack(unit: Dictionary, beat: int) -> void:
 				_warn({"type": "floor", "owner": unit.id, "pos": game.player.position, "radius": 68.0, "damage": unit.damage})
 		"skirmisher":
 			_warn({"type": "volley", "owner": unit.id, "pos": unit.pos, "angle": angle, "count": 2, "spread": 0.18})
+		"rest_vanguard":
+			if _heavy_hazard_count() < 3:
+				_warn_charge(unit)
+		"rest_gas_brute":
+			if _heavy_hazard_count() < 3:
+				_warn({"type": "floor", "owner": unit.id, "pos": game.player.position, "radius": 96.0, "damage": unit.damage})
+		"rest_siege_tank":
+			_warn({"type": "ring", "owner": unit.id, "pos": unit.pos, "angle": unit.turn * 0.16, "count": 18, "gap": angle, "speed": 132.0})
 
 func _boss_attack(unit: Dictionary, beat: int) -> void:
 	unit.turn += 1
@@ -1384,14 +1461,19 @@ func _draw_fire_effect(effect: Dictionary) -> void:
 
 func _draw_enemy_animation(unit: Dictionary, p: Vector2, size: float, tint: Color) -> void:
 	var animation_name: String = str(unit.anim_state)
+	var asset_config: Dictionary = REST_ENEMY_ANIMATIONS.get(unit.kind, {})
+	var source_size: float = float(asset_config.get("frame_size", 32.0))
 	var config: Dictionary = ENEMY_ANIMATION_CONFIG.get(animation_name, ENEMY_ANIMATION_CONFIG.idle)
+	if not asset_config.is_empty():
+		config = asset_config.animations.get(animation_name, asset_config.animations.idle)
 	var frame_count: int = int(config.frames)
 	var frame: int = mini(int(unit.anim_elapsed * float(config.fps)), frame_count - 1)
 	if bool(config.loop):
 		frame = int(fposmod(unit.anim_elapsed * float(config.fps), float(frame_count)))
 	var key: String = "%s:%s" % [unit.kind, animation_name]
 	var sheet: Texture2D = _animation_textures[key]
-	draw_texture_rect_region(sheet, Rect2(p - Vector2.ONE * size * 0.5, Vector2.ONE * size), Rect2(frame * 32, 0, 32, 32), tint)
+	var display_size: float = float(asset_config.get("display_size", size))
+	draw_texture_rect_region(sheet, Rect2(p - Vector2.ONE * display_size * 0.5, Vector2.ONE * display_size), Rect2(frame * source_size, 0, source_size, source_size), tint)
 
 func _draw_boss_animation(unit: Dictionary, p: Vector2, size: float, tint: Color) -> void:
 	var animation_name: String = str(unit.anim_state)
@@ -1408,14 +1490,19 @@ func _draw_death_animations() -> void:
 	for death in _death_animations:
 		var is_boss: bool = bool(death.get("boss", false))
 		var config: Dictionary = BOSS_ANIMATION_CONFIG.death if is_boss else ENEMY_ANIMATION_CONFIG.death
+		var asset_config: Dictionary = REST_ENEMY_ANIMATIONS.get(str(death.kind), {})
+		var source_size: float = 64.0 if is_boss else 32.0
+		var display_size: float = BOSS_RENDER_SIZE if is_boss else 40.0
+		if not asset_config.is_empty():
+			config = asset_config.animations.death
+			source_size = float(asset_config.frame_size)
+			display_size = float(asset_config.display_size)
 		var frame: int = mini(int(float(death.elapsed) * float(config.fps)), int(config.frames) - 1)
 		var key: String = "%s:death" % death.kind
 		var animations: Dictionary = _boss_animation_textures if is_boss else _animation_textures
 		if not animations.has(key):
 			continue
 		var p: Vector2 = death.pos
-		var source_size: float = 64.0 if is_boss else 32.0
-		var display_size: float = BOSS_RENDER_SIZE if is_boss else 40.0
 		var sheet: Texture2D = animations[key]
 		draw_ellipse_shadow(p + Vector2(0, BOSS_COLLISION_RADIUS * 0.8 if is_boss else 12), BOSS_COLLISION_RADIUS if is_boss else 15.0)
 		draw_texture_rect_region(sheet, Rect2(p - Vector2.ONE * display_size * 0.5, Vector2.ONE * display_size), Rect2(frame * source_size, 0, source_size, source_size), Color.WHITE)

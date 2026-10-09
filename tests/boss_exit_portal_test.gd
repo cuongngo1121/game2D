@@ -45,7 +45,14 @@ func _run() -> void:
 		game.player.position = expected_gate_position
 		game._physics_process(0.1)
 		if stage < 4:
-			_check(game.stage_index == stage + 1 and game.room_index == 0, "Area %d portal carries the player into Area %d" % [stage + 1, stage + 2])
+			_check(game.state == "area_transition" and game.stage_index == stage, "Area %d portal shows the story bridge before Area %d" % [stage + 1, stage + 2])
+			var story_label := game.ui.overlay.get_node_or_null("AreaTransition_Story") as Label
+			_check(story_label != null and not story_label.text.is_empty(), "Area %d transition includes a short narrative" % (stage + 1))
+			var continue_button := game.ui.overlay.get_node_or_null("AreaTransition_ContinueButton") as Button
+			_check(continue_button != null, "Area %d transition exposes an action to continue")
+			if continue_button != null:
+				continue_button.emit_signal("pressed")
+			_check(game.stage_index == stage + 1 and game.room_index == 0 and game.state == "playing", "Area %d transition carries the player into Area %d" % [stage + 1, stage + 2])
 		else:
 			_check(game.state == "victory", "Area 5 portal completes the run instead of entering a nonexistent Area 6")
 	game.queue_free()

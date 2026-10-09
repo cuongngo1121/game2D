@@ -195,9 +195,12 @@ var tutorial_timer: float = 0
 var room_clear_wait: float = 0
 var support_purchased: bool = false
 var pending_reward: Array = []
+var pending_stage_transition: int = -1
+var pending_rest_enemy: String = ""
 var end_recorded: bool = false
 var save_error: String = ""
 var starter: String = "pistol"
+var difficulty_mode: String = "normal"
 var test_mode: bool = false
 var debug_session: bool = false
 # Map-tour is narrower than the general temporary debug-session guard. It is
@@ -244,6 +247,7 @@ func _ready() -> void:
 	store = SaveScript.new()
 	profile = store.load_profile()
 	settings = profile.settings
+	difficulty_mode = str(settings.get("difficulty", "normal"))
 	starter = str(profile.meta.get("starter", starter))
 	coins = int(profile.meta.get("coins", 0))
 	selected_drone = str(profile.meta.get("selected_drone", ""))
@@ -329,9 +333,9 @@ func _physics_process(delta: float) -> void:
 			complete_room()
 	else:
 		room_clear_wait = 0
-	if tutorial_step < 4 and stage_index == 0 and room_index == 0:
+	if tutorial_step < 4 and stage_index == 0:
 		tutorial_timer += delta
-		if (tutorial_step == 0 and player.position.distance_to(room_entry_position(0)) > 80) or (tutorial_step == 1 and weapon_system.shot_index > 3) or (tutorial_step == 2 and player.dash_cooldown > 0) or (tutorial_step == 3 and tutorial_timer > 13):
+		if (tutorial_step == 0 and player.position.distance_to(room_entry_position(0)) > 80) or (tutorial_step == 1 and weapon_system.shot_index > 3) or (tutorial_step == 2 and player.dash_cooldown > 0) or (tutorial_step == 3 and room_index > 0):
 			tutorial_step += 1
 			tutorial_timer = 0
 
@@ -481,6 +485,8 @@ func unlock_debug_test_content() -> bool:
 	return changed
 
 func new_run(chosen_seed: int = 0, is_debug_session: bool = false, enable_debug_map_tour: bool = false, enable_assignment_demo: bool = false) -> void:
+	pending_stage_transition = -1
+	pending_rest_enemy = ""
 	debug_session = is_debug_session
 	debug_map_tour = is_debug_session and enable_debug_map_tour
 	assignment_demo_active = is_debug_session and enable_assignment_demo
@@ -867,6 +873,12 @@ func continue_run() -> void:
 	rewarded = rewarded.map(func(value): return int(value))
 	weapons = checkpoint.weapons.duplicate()
 	upgrades = checkpoint.upgrades.duplicate()
+	difficulty_mode = str(checkpoint.get("difficulty", settings.get("difficulty", "normal")))
+	if not ["easy", "normal", "hard"].has(difficulty_mode):
+		difficulty_mode = "normal"
+	pending_rest_enemy = str(checkpoint.get("pending_rest_enemy", ""))
+	if not enemies.is_rest_elite_kind(pending_rest_enemy):
+		pending_rest_enemy = ""
 	selected_drone = str(checkpoint.get("selected_drone", profile.meta.get("selected_drone", "")))
 	has_drone = bool(checkpoint.get("has_drone", profile.meta.get("has_drone", false)))
 	if selected_drone == "" and int(upgrades.get("drone", 0)) > 0:
@@ -901,7 +913,7 @@ func enter_room(index: int, preserve_player_position: bool = false) -> void:
 	# walk-in keeps the next room quiet until its inner chamber trigger is
 	# crossed; direct entries and restored encounters retain immediate combat.
 	combat_chamber_pending = is_open_route_stage() and preserve_player_position and index >= 1 and index <= 3 and not cleared.has(index)
-	boss_chamber_pending = is_open_route_stage() and index == 5 and preserve_player_position and not cleared.has(5)
+	boss_chamber_pending = is_open_route_stage() and index == 5 and not cleared.has(5)
 	exit_portal_active = false
 	exit_portal_elapsed = 0.0
 	exit_portal_player_has_left = false
@@ -1527,8 +1539,17 @@ func _start_regular_room_combat() -> void:
 	combat_active = true
 	rng.seed = seed_value + stage_index * 104729 + room_index * 991
 	enemies.spawn_room(stage_index, room_index, false, seed_value + stage_index * 104729 + room_index * 991)
+	var elite_kind := pending_rest_enemy
+	if not elite_kind.is_empty() and enemies.spawn_rest_elite(elite_kind):
+		var elite_name: String = str(enemies.units.back().get("name", "KẺ ĐỘT NHẬP"))
+		pending_rest_enemy = ""
+		if profile.get("checkpoint", {}) is Dictionary and not profile.checkpoint.is_empty():
+			profile.checkpoint["pending_rest_enemy"] = ""
+			persist_profile()
+		flash_text("%s · ĐỘT NHẬP SAU KHOẢNG NGHỈ" % elite_name, Color("ff916d"))
+	else:
+		flash_text("PHÒNG %d · Tín hiệu lỗi đã khóa cửa" % (room_index + 1), Color("35e7ff"))
 	audio.request_intensity("combat")
-	flash_text("PHÒNG %d · Tín hiệu lỗi đã khóa cửa" % (room_index + 1), Color("35e7ff"))
 	if room_view != null:
 		room_view.queue_redraw()
 
@@ -1540,6 +1561,17 @@ func start_pending_room_encounter() -> void:
 func start_boss_encounter() -> void:
 	if not boss_chamber_pending or combat_active or room_index != 5 or cleared.has(5):
 		return
+	state = "boss_briefing"
+	controls.reset()
+	rhythm.pause_music()
+	ui.show_boss_briefing(stage_index)
+
+func confirm_boss_briefing() -> void:
+	if state != "boss_briefing" or not boss_chamber_pending or room_index != 5:
+		return
+	ui.hide_overlay()
+	state = "playing"
+	rhythm.resume_music()
 	combat_chamber_pending = false
 	boss_chamber_pending = false
 	combat_active = true
@@ -1650,6 +1682,8 @@ func complete_room() -> void:
 	if is_debug_map_tour():
 		_complete_debug_combat()
 		return
+	if room_index != 4:
+		pending_rest_enemy = enemies.choose_rest_elite_kind(seed_value + stage_index * 104729 + room_index * 3001 + run_kills)
 	combat_chamber_pending = false
 	boss_chamber_pending = false
 	combat_active = false
@@ -2161,13 +2195,11 @@ func travel(destination: int) -> void:
 		if stage_index == 4:
 			end_run(true)
 			return
-		stage_index += 1
-		cleared.clear()
-		rewarded.clear()
-		graph = GraphScript.generate(seed_value, stage_index)
-		set_stage_music()
-		enter_room(0)
-		save_checkpoint()
+		pending_stage_transition = stage_index + 1
+		state = "area_transition"
+		controls.reset()
+		rhythm.pause_music()
+		ui.show_area_transition(stage_index, pending_stage_transition)
 		return
 	# Route stages are traversed directly through their connected collision
 	# polygons. Only the post-boss action above may leave the stage; room-to-room
@@ -2179,6 +2211,18 @@ func travel(destination: int) -> void:
 		# Save travel only when destination is safe. Entering combat preserves prior completed checkpoint.
 		if cleared.has(destination):
 			save_checkpoint()
+
+func confirm_area_transition() -> void:
+	if state != "area_transition" or pending_stage_transition != stage_index + 1 or pending_stage_transition > 4:
+		return
+	stage_index = pending_stage_transition
+	pending_stage_transition = -1
+	cleared.clear()
+	rewarded.clear()
+	graph = GraphScript.generate(seed_value, stage_index)
+	set_stage_music()
+	enter_room(0)
+	save_checkpoint()
 
 func room_name(index: int) -> String:
 	if index == 4: return "Trạm hỗ trợ"
@@ -2247,7 +2291,8 @@ func save_checkpoint() -> bool:
 		"cleared": cleared.duplicate(), "rewarded": rewarded.duplicate(), "player": player.snapshot(),
 		"coins": coins, "upgrades": upgrades.duplicate(), "weapons": weapons.duplicate(), "elapsed": elapsed,
 		"active_slot": active_slot, "run_kills": run_kills, "perfect_count": perfect_count, "starter": starter,
-		"has_drone": has_drone, "selected_drone": selected_drone}
+		"has_drone": has_drone, "selected_drone": selected_drone, "pending_rest_enemy": pending_rest_enemy,
+		"difficulty": difficulty_mode}
 	return persist_profile()
 
 func persist_profile() -> bool:

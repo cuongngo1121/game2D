@@ -12,8 +12,14 @@ Các file `data/*.json` là mảng JSON UTF-8, không có object bọc ngoài.
 | --- | --- | --- |
 | `data/weapons.json` | 12 vũ khí | `id`, `name`, `description`, `cooldown`, `damage`, `speed`, `range`, `energy`, `behavior`, `icon`, `sprite`, `sfx` |
 | `data/upgrades.json` | 13 nâng cấp | `id`, `name`, `description`, `max_stacks`, `compatible` |
-| `data/enemies.json` | 10 loại địch thường | `id`, `name`, `hp`, `speed`, `damage`, `reward`, `role`, `sprite` |
+| `data/enemies.json` | 13 loại địch thường (10 roster + 3 elite sau khoảng nghỉ) | `id`, `name`, `hp`, `speed`, `damage`, `reward`, `role`, `sprite` |
 | `data/stages.json` | 5 khu vực | `id`, `name`, `subtitle`, `description`, `boss`, `boss_id`, `bpm`, `color`, `enemy_ids`, `room_templates`, `boss_obstacles`, `hazard`, `music_layers` |
+
+Ba enemy sprite sheet mới trong `enemies/1`, `enemies/2` và `enemies/3` được dùng
+làm elite ngẫu nhiên sau mỗi phòng chiến đấu. Elite được xếp hàng trong reward /
+shop break và xuất hiện cùng wave đầu của combat kế tiếp; checkpoint giữ loại đã
+chọn để Continue không đổi hoặc nhân đôi. Lính xung kích lao thẳng, quái khí
+khóa vùng sàn, còn xe pháo bắn vòng đạn có khe hở.
 
 `cooldown` tính bằng giây, tốc độ theo pixel/giây, `range` theo pixel trong
 viewport thiết kế 1280×720. `energy` là mức tiêu hao mỗi lần hệ thống vũ khí
@@ -106,6 +112,14 @@ ngang liên tục ở tốc độ parallax khác nhau; mỗi lớp dùng cặp �
 nối vòng không giật. Nền được phủ tối nhẹ để giữ tiêu đề dễ đọc. Năm nút neon
 được dựng riêng trong `scripts/ui/game_ui.gd`. Chỉ sảnh chính dùng các lớp này;
 nền map và gameplay không thay đổi.
+
+Lượt mới bắt đầu bằng prologue về NOCTIS và THE SILENCE, nêu mục tiêu khôi phục
+năm vùng theo thứ tự trong `data/stages.json` cùng điều khiển cơ bản. Tutorial
+trong phòng đầu nhắc di chuyển, bắn, dash và mở cổng; có thể bỏ qua. Tiếp tục
+checkpoint không phát lại prologue hoặc tutorial.
+
+Sau khi rời cổng boss ở các khu 1–4, màn chuyển tiếp ghi nhận lớp nhạc vừa khôi
+phục và kể ngắn về tín hiệu dẫn tới khu kế tiếp trước khi người chơi tiếp tục.
 
 ## Âm thanh thực
 

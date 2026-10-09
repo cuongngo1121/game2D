@@ -43,6 +43,7 @@ const DEFAULT_SETTINGS: Dictionary = {
 	"music": 0.65, "sfx": 0.7, "vibration": true, "screen_shake": 0.4,
 	"reduced_flashes": false, "quality": 1, "latency_ms": 0.0,
 	"touch_scale": 1.0, "touch_opacity": 0.65, "auto_aim": true,
+	"difficulty": "normal",
 	"music_enabled": true, "sfx_enabled": true, "settings_layout_positions": {}, "hud_layout": {}, "touch_layout": {}, "pause_layout": {}, "reward_layout": {}, "support_layout": {}, "armory_layout": {},
 }
 const DEFAULT_META: Dictionary = {
@@ -200,6 +201,8 @@ func validate_checkpoint(checkpoint: Dictionary) -> bool:
 		return false
 	if checkpoint.has("branch_position") and not _integer_between(checkpoint["branch_position"], 0, 63):
 		return false
+	if checkpoint.has("difficulty") and (not checkpoint["difficulty"] is String or not ["easy", "normal", "hard"].has(checkpoint["difficulty"])):
+		return false
 	if checkpoint.has("starter") and (not checkpoint["starter"] is String or not _identifier(checkpoint["starter"])):
 		return false
 	return true
@@ -221,6 +224,8 @@ func _normalize_profile(profile: Dictionary) -> Dictionary:
 				output["settings"][key] = settings[key]
 		if _integer_between(settings.get("quality"), 0, 2):
 			output["settings"]["quality"] = int(settings["quality"])
+		if settings.get("difficulty") is String and ["easy", "normal", "hard"].has(settings["difficulty"]):
+			output["settings"]["difficulty"] = settings["difficulty"]
 		if settings.get("settings_layout_positions") is Dictionary:
 			var normalized_settings_layout := _normalize_settings_layout_positions(settings["settings_layout_positions"])
 			output["settings"]["settings_layout_positions"].merge(normalized_settings_layout, true)

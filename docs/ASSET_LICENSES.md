@@ -48,6 +48,11 @@ chứa giấy phép nguồn tại `background/license.txt` và liên kết
 `background/Free Assets Craftpix!.url`; cần xác nhận điều khoản Craftpix trước
 khi phát hành thương mại.
 
+Ba bộ sprite animation mới tại `enemies/1/`, `enemies/2/` và `enemies/3/` cũng
+được cung cấp kèm liên kết Craftpix tại `enemies/Free Assets Craftpix!.url` và
+coupon trong `enemies/COUPON.pdf`. Hãy xác minh điều khoản áp dụng cho đúng gói
+asset trước khi phát hành thương mại.
+
 `assets/backgrounds/armory_loadout_matrix_v1.png` là nền kho vũ khí runtime,
 được tạo bằng ImageGen ngày 2026-09-13 theo brief NEON RESONANCE. Asset có
 mười hai khoang module trống, khung điều khiển trở lại và trang trí command-deck

@@ -5,6 +5,8 @@
     "description": "Ga tàu im tiếng. Tìm lại nhịp trống đầu tiên và mở đường ray đến xưởng loa.",
     "boss": "CONDUCTOR-01",
     "boss_id": "conductor",
+    "boss_warning": "Bắn một quạt đạn rộng, chừa khe giữa rồi lao thẳng theo hướng đã khóa.",
+    "boss_counter": "Dịch ngang khỏi trục ngắm; khi thấy đường lao, dash ngang thay vì lùi thẳng.",
     "bpm": 90,
     "enemy_ids": [
       "drone",
@@ -99,6 +101,9 @@
     "description": "Piston và màng loa khổng lồ. Thu hồi bè bass khỏi dây chuyền bị chiếm quyền.",
     "boss": "SUBWOOFER",
     "boss_id": "subwoofer",
+    "boss_warning": "Phóng vòng 22 viên có một khe hở; đôi lúc lao thẳng vào phi công.",
+    "boss_counter": "Canh khe trống để lách qua vòng đạn, giữ khoảng cách và né ngang cú lao.",
+    "transition_story": "Nhịp trống từ ga vọng âm khớp vào bè bass. Một tín hiệu nặng như tiếng máy đang kéo toàn bộ đường ray về xưởng đúc.",
     "bpm": 100,
     "enemy_ids": [
       "charger",
@@ -201,6 +206,9 @@
     "description": "Cây quang học lưu giữ hợp âm. Dập các nụ loa nhiễu để khôi phục khu vườn.",
     "boss": "CHOIR WIDOW",
     "boss_id": "choir_widow",
+    "boss_warning": "Bắn volley vọng lại lần hai; khi vào phase 2 có thể gọi thêm mục tiêu hỗ trợ.",
+    "boss_counter": "Đừng quay lại vùng vừa né volley; dọn mục tiêu hỗ trợ trước để giảm áp lực.",
+    "transition_story": "Bè bass được thu hồi làm rung những hạt mầm quang học. Trong khu vườn dữ liệu, một hợp âm lạ đang gọi các loa nhiễu thức dậy.",
     "bpm": 110,
     "enemy_ids": [
       "splitter",
@@ -316,6 +324,9 @@
     "description": "Tín hiệu phản xạ qua các trụ kính. Đọc đường laser để giành lại giai điệu lead.",
     "boss": "REFRACTOR",
     "boss_id": "refractor",
+    "boss_warning": "Kết hợp volley vọng, vòng đạn và cú lao; phase sau thêm xoáy đạn cùng lăng kính quét.",
+    "boss_counter": "Đọc vệt báo trước, lách qua khe vòng đạn và đổi hướng sau mỗi cú lao.",
+    "transition_story": "Hợp âm trong khu vườn mở ra đường truyền tới tháp lăng kính. Tín hiệu bị bẻ thành nhiều hướng; đường laser đang dẫn sâu vào lõi.",
     "bpm": 120,
     "enemy_ids": [
       "sniper",
@@ -433,6 +444,9 @@
     "description": "Bản phối đang vỡ vụn trong lõi thành phố. Hợp nhất các lớp nhạc và chấm dứt THE SILENCE.",
     "boss": "NULL MAESTRO",
     "boss_id": "null_maestro",
+    "boss_warning": "Volley nhanh, đạn tách và vòng đạn; phase sau khóa vùng dưới chân và bắn hai trục laser.",
+    "boss_counter": "Luôn di chuyển; rời vùng sàn đang khóa ngay, dash qua lane laser và tránh đạn tách.",
+    "transition_story": "Giai điệu lead hội tụ thành tọa độ cuối cùng: SILENT CORE. THE SILENCE đang hòa tan mọi lớp nhạc để viết lại NOCTIS.",
     "bpm": 128,
     "enemy_ids": [
       "warden",

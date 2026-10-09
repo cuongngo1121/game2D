@@ -98,5 +98,35 @@
     "reward": 9,
     "role": "Di chuyển ngang và bắn loạt định hướng, thay đổi góc giao tranh.",
     "sprite": "res://assets/sprites/enemy_skirmisher.svg"
+  },
+  {
+    "id": "rest_vanguard",
+    "name": "Lính xung kích",
+    "hp": 94,
+    "speed": 76,
+    "damage": 14,
+    "reward": 14,
+    "role": "Áp sát nhanh; khóa hướng trước khi lao thẳng.",
+    "sprite": "res://enemies/1/Idle.png"
+  },
+  {
+    "id": "rest_gas_brute",
+    "name": "Quái phun khí",
+    "hp": 132,
+    "speed": 31,
+    "damage": 16,
+    "reward": 18,
+    "role": "Phun khí khóa vùng tại vị trí người chơi; rời vòng cảnh báo trước khi nổ.",
+    "sprite": "res://enemies/2/Idle.png"
+  },
+  {
+    "id": "rest_siege_tank",
+    "name": "Xe pháo nhiễu",
+    "hp": 164,
+    "speed": 22,
+    "damage": 17,
+    "reward": 20,
+    "role": "Bắn vòng đạn có khe hở; tìm khe rồi dash xuyên qua.",
+    "sprite": "res://enemies/3/Idle.png"
   }
 ]

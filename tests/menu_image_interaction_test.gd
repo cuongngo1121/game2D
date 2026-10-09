@@ -59,8 +59,20 @@ func _run() -> void:
 	_check(_is_operable_art_region(new_run_button), "New-run uses an enabled native Button exactly over its artwork rectangle")
 	if new_run_button != null:
 		new_run_button.emit_signal("pressed")
-		await _frames(2)
-	_check(game.state == "playing" and not game.profile.checkpoint.is_empty(), "The new-run artwork hitbox starts a run and creates its normal checkpoint")
+		await _frames(4)
+	_check(game.state == "menu" and game.ui.overlay.get_node_or_null("Campaign_StoryTitle") != null, "New Run opens the campaign prologue")
+	_check(game.ui.overlay.get_node_or_null("Campaign_StoryBody") != null and game.ui.overlay.get_node_or_null("Campaign_Route") != null, "The prologue explains NOCTIS and lists the five-region route")
+	_check(game.ui.overlay.get_node_or_null("Campaign_ControlsGuide") != null, "The prologue explains keyboard and touch controls")
+	var campaign_start := game.ui.overlay.get_node_or_null("Campaign_StartButton") as Button
+	_check(campaign_start != null and not campaign_start.disabled, "The prologue has a working campaign start action")
+	if campaign_start != null:
+		campaign_start.emit_signal("pressed")
+		await _frames(4)
+	_check(game.state == "playing" and not game.profile.checkpoint.is_empty(), "Starting from the prologue creates the normal run checkpoint")
+	_check(game.ui.tutorial_panel.visible and game.ui.tutorial_label.text.contains("DI CHUYỂN"), "First room displays the movement tutorial")
+	game.ui.tutorial_skip_button.emit_signal("pressed")
+	await process_frame
+	_check(game.tutorial_step == 4 and not game.ui.tutorial_panel.visible, "The player can dismiss the first-room tutorial")
 
 	game.return_to_menu()
 	await _frames(4)
